@@ -12,6 +12,30 @@ Final project (TCC) at UFMG.
 - **Experiment runner** (`scripts/`, `experiments/`): runs several grading protocols over reference answers with known expected scores and computes error, cost and robustness metrics.
 - **Question-creation prompts** (`agents/`): prompts used to draft and review new questions.
 
+## Architecture
+
+```mermaid
+flowchart LR
+    Q["Question bank<br/>questions/ + prompts/"] --> P["Prompt builder"]
+    A["Answer from the web app<br/>POST /api/evaluate, Zod validation"] --> P
+    P --> M["LLM via OpenRouter"]
+    M --> R["Tolerant JSON parser<br/>one retry on invalid JSON"]
+    R --> O["Overall score 0-5<br/>score and evidence per criterion<br/>written feedback"]
+    O --> DB[("PostgreSQL via Prisma<br/>attempt history")]
+```
+
+The experiment runner applies one of three grading protocols to reference answers with known expected scores:
+
+```mermaid
+flowchart LR
+    REF["Reference answers<br/>strong, medium, weak, misleading"] --> S["single<br/>one call"]
+    REF --> V["review<br/>second call reviews the first grade"]
+    REF --> G["multi_aggregate<br/>several evaluations aggregated"]
+    S --> X["Metrics<br/>MAE, cost, latency"]
+    V --> X
+    G --> X
+```
+
 ## Experiment
 
 Three grading protocols, same model (`google/gemini-2.5-flash`):
