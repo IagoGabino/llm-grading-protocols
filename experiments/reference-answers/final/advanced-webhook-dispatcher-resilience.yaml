@@ -1,0 +1,396 @@
+questionSlug: advanced-webhook-dispatcher-resilience
+
+answers:
+  - id: advanced-webhook-dispatcher-resilience-strong
+    profile: strong
+    variant: complete_correct
+
+    answerText: |
+      ## Estratégia de Isolamento de Filas
+
+      O problema central não é velocidade de consumo — é que workers stateless compartilham
+      um único pool de threads, então um tenant lento captura progressivamente todas as
+      capacidades disponíveis. Aumentar workers ou timeout não resolve; o que resolve é
+      garantir que eventos de um tenant problemático não ocupem slots que deveriam servir
+      tenants saudáveis.
+
+      **Abordagem adotada: Fast Lane / Slow Lane com Shuffle Sharding interno**
+
+      Crio duas categorias de filas:
+
+      - **Fast lane:** onde ficam os eventos de tenants saudáveis (circuito fechado).
+        Dentro da fast lane, aplico shuffle sharding com 16 shards fixos. Cada tenant
+        é atribuído a 2 shards aleatórios na sua criação. Workers são dedicados a shards
+        específicos (ex.: Worker Pool A cobre shards 1–4, Worker Pool B cobre shards 5–8,
+        etc.). Se o Tenant X degrada o Shard 3, apenas os outros tenants também no Shard 3
+        são impactados — não todos os 200+ tenants. A probabilidade de dois tenants
+        aleatórios compartilharem os mesmos 2 shards com 16 shards totais é baixa (~0.8%).
+
+      - **Slow lane:** fila dedicada para retries e para tenants cujo circuito está aberto.
+        Serve por um pool menor de workers (ex.: 10 dos 50 totais), garantindo que 80%
+        dos workers fiquem livres para a fast lane. Eventos nesta lane têm delay por
+        backoff antes de serem reprocessados.
+
+      **Roteamento:** um componente de roteamento consulta o estado do Circuit Breaker de
+      cada tenant no Redis antes de publicar. Se o circuito está aberto, o evento vai
+      diretamente para a slow lane, sem sequer entrar na fast lane.
+
+      **Trade-offs dessa abordagem:**
+      - O shuffle sharding não garante isolamento perfeito: dois tenants podem colidir
+        no mesmo shard. Com 16 shards e K=2, um shard degradado afeta em média ~12%
+        dos tenants, não 100%.
+      - A lógica de promoção/rebaixamento entre lanes exige critério claro e estado
+        compartilhado — mais complexidade operacional do que fila única.
+      - 16 shards fixos é um número gerenciável em operação, mas pode ser insuficiente
+        se o volume de tenants crescer muito (ex.: 1000+ tenants com comportamentos
+        muito distintos).
+
+      ## Resiliência nos Workers (Timeouts e Circuit Breaker)
+
+      **Timeouts HTTP:**
+
+      Reduzo drasticamente os tempos de espera:
+      - Connect timeout: 2 segundos — se o endpoint não aceita a conexão em 2s, não vai
+        aceitar em 30s.
+      - Read timeout: 8 segundos — tempo para receber a resposta após a conexão ser
+        estabelecida.
+
+      Com isso, o tempo máximo que um worker fica bloqueado por um endpoint problemático
+      cai de 30s para no máximo 10s, liberando o worker para outros eventos muito mais
+      rapidamente.
+
+      **Circuit Breaker por tenant:**
+
+      Como os workers são stateless, o estado do circuito é armazenado no Redis:
+      chave `cb:{tenant_id}` com campos: estado atual, contador de falhas na janela,
+      timestamp de abertura e contagem de tentativas no half-open.
+
+      Os três estados:
+
+      - **CLOSED (normal):** worker faz a chamada HTTP normalmente. Monitora taxa de
+        falha em janela deslizante de 60 segundos. Critério de abertura: taxa de falha
+        ≥ 50% com no mínimo 10 requisições na janela. Erros de timeout, HTTP 5xx e
+        conexão recusada contam como falha. HTTP 4xx não conta (erro do payload, não
+        do endpoint).
+
+      - **OPEN:** circuito disparado. Worker rejeita o evento imediatamente sem fazer
+        chamada HTTP — microsegundos de processamento em vez de segundos. O evento é
+        roteado para a slow lane para retry posterior. O circuito permanece aberto por
+        90 segundos por padrão, com cooldown configurável por tenant.
+
+      - **HALF-OPEN:** após o cooldown, o circuito permite 3 requisições de teste.
+        Se todas as 3 retornarem sucesso (2xx), o circuito volta para CLOSED e o tenant
+        é promovido de volta para a fast lane. Se qualquer uma falhar, o circuito volta
+        para OPEN com cooldown reiniciado.
+
+      **Por que Redis e não estado local:** workers stateless em múltiplas instâncias
+      precisam compartilhar o estado do circuito. Se cada worker mantivesse estado local,
+      o Tenant X poderia ter o circuito aberto em alguns workers e fechado em outros,
+      resultando em comportamento inconsistente. Redis com TTL nos campos garante
+      limpeza automática de circuitos de tenants inativos.
+
+      ## Políticas de Retry e Dead Letter Queue (DLQ)
+
+      **Retries não voltam para a fast lane.** Esse é o ponto central: se um evento de
+      retry volta para a fila principal, ele compete por slots com eventos frescos de
+      tenants saudáveis. Em períodos de alta falha, retries poderiam dominar a fila e
+      causar o mesmo problema do Noisy Neighbor que tentamos resolver.
+
+      Eventos com falha vão para a slow lane com delay calculado por backoff exponencial
+      com jitter:
+
+      ```
+      delay = min(5 * 2^(attempt - 1), 300) segundos + jitter(±20%)
+
+      Tentativa 1: ~5s  (falhou na entrega original)
+      Tentativa 2: ~10s
+      Tentativa 3: ~20s
+      Tentativa 4: ~40s
+      Tentativa 5: ~80s
+      → Após 5 tentativas: move para DLQ
+      ```
+
+      O jitter (±20% aleatório sobre o delay calculado) evita que múltiplos eventos do
+      mesmo tenant em falha se sincronizem e bombardeiem o endpoint simultaneamente ao
+      expirar o cooldown — o chamado thundering herd.
+
+      **Dead Letter Queue (DLQ):**
+
+      Eventos que esgotam 5 tentativas são movidos para a DLQ com metadados completos:
+      tenant_id, payload original, timestamps de cada tentativa, códigos HTTP de resposta
+      e corpo da resposta de erro quando disponível.
+
+      A DLQ serve três propósitos distintos:
+
+      1. **Auditoria:** o tenant pode solicitar o histórico de entregas falhadas via
+         painel ou API para entender o que aconteceu com cada evento.
+
+      2. **Reprocessamento manual:** após o tenant corrigir seu endpoint, um operador
+         pode reprocessar os eventos da DLQ. Isso deve ser feito com rate limiting para
+         não causar pico nos endpoints em recuperação.
+
+      3. **Alertas de SLA:** se a taxa de entrada na DLQ de um tenant supera um threshold
+         (ex.: 100 eventos em 15 minutos), dispara alerta para o time de suporte e para
+         o próprio tenant via notificação.
+
+      O TTL dos eventos na DLQ deve ser configurável por tenant e contratualmente definido
+      — tipicamente 7 a 30 dias. Após o TTL, eventos são arquivados em storage frio
+      (ex.: S3 com Glacier) antes de serem removidos da DLQ ativa, preservando
+      rastreabilidade sem custo de fila ativa.
+
+    expectedOverall: 4.73
+    expectedCriteria:
+      - criterionId: isolamento
+        expectedScore: 5.0
+        rationale: |
+          Identifica corretamente o problema como resource exhaustion de workers compartilhados.
+          Propõe fast/slow lane com shuffle sharding interno (16 shards, K=2) — solução
+          viável em produção com número gerenciável de filas. Explica o roteamento dinâmico
+          via estado do CB no Redis. Reconhece trade-offs reais: isolamento não perfeito com
+          sharding, complexidade de promoção/rebaixamento, limitação para volumes muito altos
+          de tenants.
+
+      - criterionId: circuit_breaker
+        expectedScore: 4.5
+        rationale: |
+          Os três estados (CLOSED, OPEN, HALF-OPEN) estão corretos e com critérios numéricos:
+          ≥50% de falhas em 60s com mínimo de 10 requisições para abrir; 3 requisições de
+          teste bem-sucedidas para fechar. Comportamento no OPEN definido: rejeição imediata
+          + roteamento para slow lane. Estado compartilhado via Redis explicado com justificativa
+          (workers stateless). Timeouts com valores específicos (2s connect, 8s read). Pequena
+          penalização por não detalhar o mecanismo de reset do contador de falhas na janela
+          deslizante (ex.: sliding window vs. fixed window).
+
+      - criterionId: retry_e_dlq
+        expectedScore: 5.0
+        rationale: |
+          Retries vão para slow lane, nunca para fast lane — explicitado e justificado.
+          Backoff exponencial com jitter descrito com fórmula e exemplos numéricos (5s, 10s,
+          20s...). Jitter com propósito explicado (thundering herd). 5 tentativas antes da
+          DLQ. DLQ com metadados completos e três propósitos distintos: auditoria, reprocessamento
+          manual e alertas de SLA. TTL configurável com arquivamento em storage frio.
+          Reprocessamento com rate limiting mencionado.
+
+      - criterionId: tradeoffs
+        expectedScore: 4.0
+        rationale: |
+          Trade-offs de isolamento reconhecidos (colisões residuais em sharding, complexidade
+          de roteamento, limitação de escala). Circuit Breaker com Redis mencionado como ponto
+          de atenção. DLQ com TTL e custo de armazenamento endereçados. Falta mencionar
+          explicitamente o Redis como possível SPOF e estratégias de mitigação, o que é
+          relevante para uma resposta avançada.
+
+    notes: |
+      expectedOverall = (5.0×0.35) + (4.5×0.35) + (5.0×0.20) + (4.0×0.10)
+                      = 1.75 + 1.575 + 1.00 + 0.40
+                      = 4.725 → arredondado para 4.73.
+
+  - id: advanced-webhook-dispatcher-resilience-medium
+    profile: medium
+    variant: partial_correct
+
+    answerText: |
+      ## Estratégia de Isolamento de Filas
+
+      Para resolver o problema do Noisy Neighbor, a solução mais direta é criar uma fila
+      dedicada por tenant. Cada tenant tem sua própria fila no RabbitMQ, e workers são
+      configurados para consumir de múltiplas filas em paralelo usando round-robin.
+
+      Quando um tenant fica lento, os workers que estão processando eventos desse tenant
+      ficam presos, mas os workers que estão consumindo das filas de outros tenants
+      continuam funcionando normalmente. A lentidão fica contida na fila do tenant
+      problemático.
+
+      Isso resolve diretamente o requisito RF1: a falha de um tenant não afeta os demais
+      porque os eventos estão em filas separadas.
+
+      ## Resiliência nos Workers (Timeouts e Circuit Breaker)
+
+      **Timeouts:** Os workers devem usar timeouts mais agressivos do que os 30 segundos
+      atuais. Um timeout de 5 a 10 segundos é mais adequado para webhooks, onde o endpoint
+      do tenant deveria responder rapidamente.
+
+      **Circuit Breaker:** Para proteger os workers de endpoints cronicamente problemáticos,
+      implemento o padrão Circuit Breaker por tenant. O circuito tem três estados:
+
+      - **Fechado:** comportamento normal, chamadas HTTP são feitas.
+      - **Aberto:** chamadas são bloqueadas, eventos são descartados ou enfileirados para
+        retry.
+      - **Meio-aberto:** algumas chamadas de teste são permitidas para verificar se o
+        endpoint se recuperou.
+
+      O circuito abre quando a taxa de falhas atinge um certo limite, e fecha quando as
+      chamadas de teste têm sucesso. Como os workers são stateless, o estado do circuito
+      pode ser armazenado em Redis.
+
+      ## Políticas de Retry e Dead Letter Queue (DLQ)
+
+      Quando um webhook falha na entrega, o evento é recolocado na fila do tenant com um
+      delay usando backoff exponencial: a primeira tentativa aguarda alguns segundos, a
+      segunda aguarda o dobro, e assim por diante. Isso evita que o sistema pressione
+      constantemente um endpoint que está com problemas.
+
+      Após um número máximo de tentativas (por exemplo, 5), o evento é movido para a
+      Dead Letter Queue (DLQ). A DLQ funciona como um repositório de eventos que não
+      puderam ser entregues, permitindo análise posterior e reprocessamento manual quando
+      o problema for resolvido.
+
+    expectedOverall: 2.70
+    expectedCriteria:
+      - criterionId: isolamento
+        expectedScore: 3.5
+        rationale: |
+          Propõe filas dedicadas por tenant — abordagem válida e viável (explicada
+          corretamente como forma de conter a lentidão). No entanto, não reconhece
+          nenhum trade-off real da abordagem: com centenas de tenants, filas dedicadas
+          criam custo operacional significativo (ex.: RabbitMQ sugere <1000 filas por
+          vhost), dificuldade de monitoramento e overhead de polling. A ausência de
+          reconhecimento de trade-offs limita a nota, mas a proposta de isolamento
+          em si é forte.
+
+      - criterionId: circuit_breaker
+        expectedScore: 2.5
+        rationale: |
+          Os três estados do CB são mencionados (fechado, aberto, meio-aberto). Menciona que
+          abre por "taxa de falhas", mas sem critérios quantitativos estritos (quantas falhas
+          em qual janela). Timeout mencionado com faixa (5–10s) mas sem critério de
+          dimensionamento. Estado compartilhado via Redis é mencionado. A ausência de
+          thresholds numéricos claros é a principal lacuna.
+
+      - criterionId: retry_e_dlq
+        expectedScore: 2.5
+        rationale: |
+          Backoff exponencial mencionado com a lógica correta (delay dobra a cada tentativa).
+          Porém o evento de retry é recolocado na "fila do tenant" — que é a fila principal
+          de alta prioridade. O prompt penaliza explicitamente retries que voltam à fila
+          principal sem justificativa. Não menciona jitter para evitar thundering herd. DLQ
+          descrita apenas como "repositório de eventos não entregues" — sem mencionar alertas
+          de SLA, metadados de diagnóstico ou processo de reprocessamento estruturado.
+
+      - criterionId: tradeoffs
+        expectedScore: 1.0
+        rationale: |
+          A resposta não reconhece nenhum trade-off explícito. Não discute o custo de N filas,
+          a complexidade de monitorar múltiplas filas, o custo da DLQ ou os riscos do CB
+          por tenant. A rubrica penaliza respostas que listam apenas vantagens sem ponderar
+          custos ou riscos.
+
+    notes: |
+      expectedOverall = (3.5×0.35) + (2.5×0.35) + (2.5×0.20) + (1.0×0.10)
+                      = 1.225 + 0.875 + 0.50 + 0.10
+                      = 2.70.
+
+  - id: advanced-webhook-dispatcher-resilience-misleading
+    profile: misleading
+    variant: good_writing_low_coverage
+
+    answerText: |
+      ## Estratégia de Isolamento de Filas
+
+      O problema de Noisy Neighbor em sistemas de webhooks é clássico e a solução está
+      em gerenciar a capacidade de forma mais inteligente, não simplesmente isolar filas.
+
+      A abordagem que recomendo é um sistema de **prioridade ponderada** dentro da fila
+      existente. Em vez de criar múltiplas filas — o que aumenta significativamente a
+      complexidade operacional e o custo de infraestrutura — o sistema atribui pesos de
+      prioridade a cada tenant com base em seu comportamento recente.
+
+      Tenants saudáveis (com alta taxa de entrega bem-sucedida) recebem prioridade maior
+      e seus eventos são processados primeiro. Tenants problemáticos (com alta taxa de
+      falha ou endpoints lentos) têm seus eventos despriorizados dentro da mesma fila.
+
+      Para implementar isso, uso uma fila com suporte a prioridade (como RabbitMQ com
+      priority queues) onde cada mensagem carrega um campo de prioridade de 0 a 10.
+      Um componente de scoring atualiza dinamicamente o score de cada tenant e ajusta
+      a prioridade das suas mensagens. Isso mantém uma única fila, simplifica o
+      monitoramento e não requer roteamento complexo.
+
+      **Escalar horizontalmente** é outra alavanca importante: aumentar o pool de workers
+      de 50 para 100 ou 150 reduz a pressão de cada worker individual e dá mais
+      capacidade para absorver tenants lentos sem bloquear o processamento dos demais.
+
+      ## Resiliência nos Workers (Timeouts e Circuit Breaker)
+
+      Os timeouts são definitivamente o problema mais imediato. Reduzir o timeout de 30
+      segundos para 5 a 8 segundos já resolve uma parte significativa do problema: ao
+      invés de cada worker ficar bloqueado por 30s, ele falha em 5–8s e pode processar
+      o próximo evento.
+
+      Para proteção adicional, recomendo implementar um **Circuit Breaker** por tenant.
+      Quando o sistema detecta que um tenant está com problemas — através de um aumento
+      na taxa de timeouts e erros HTTP — o Circuit Breaker entra em ação e temporariamente
+      pausa o envio de webhooks para aquele tenant. Isso protege os workers de ficarem
+      presos em chamadas sem resposta e dá tempo para o endpoint do tenant se recuperar.
+
+      O Circuit Breaker pode ser configurado com um threshold de falha (ex.: 5 falhas
+      consecutivas) e um período de cooldown (ex.: 60 segundos) antes de tentar novamente.
+      Durante o cooldown, os eventos do tenant são enfileirados para entrega posterior.
+
+      ## Políticas de Retry e Dead Letter Queue (DLQ)
+
+      Para eventos que falham na entrega, implemento uma política de retry com backoff
+      exponencial. As tentativas são espaçadas exponencialmente: 10 segundos, 20 segundos,
+      40 segundos, e assim por diante. Após 5 tentativas sem sucesso, o evento é
+      considerado irrecuperável.
+
+      Os eventos de retry são recolocados na fila principal com prioridade reduzida.
+      Isso garante que eles não competem diretamente com eventos frescos e recentes,
+      pois os eventos de prioridade mais alta são processados primeiro.
+
+      Eventos irrecuperáveis são movidos para a Dead Letter Queue (DLQ), onde ficam
+      armazenados para análise e eventual reprocessamento manual. A DLQ é uma fila
+      separada com retenção configurável (ex.: 7 dias) que permite ao time de operações
+      inspecionar quais eventos não foram entregues e tomar ação manual quando necessário.
+
+    expectedOverall: 1.58
+    expectedCriteria:
+      - criterionId: isolamento
+        expectedScore: 0.5
+        rationale: |
+          Propõe prioridade ponderada dentro de uma única fila central — exatamente a
+          abordagem que não resolve o Noisy Neighbor. O prompt penaliza fortemente soluções
+          que não isolam o tráfego por tenant. Filas com prioridade não impedem que workers
+          fiquem bloqueados em eventos de tenant lento que chegam antes na fila ou que têm
+          prioridade temporariamente alta. A sugestão de "aumentar workers de 50 para 100"
+          é explicitamente mencionada no prompt como solução inadequada. A resposta não
+          propõe nenhum mecanismo de isolamento real.
+
+      - criterionId: circuit_breaker
+        expectedScore: 2.0
+        rationale: |
+          Menciona CB por tenant com threshold de falhas e cooldown — conceitualmente
+          relevante. Porém descreve apenas dois estados implícitos (ativo/pausado) sem
+          os três estados formais (CLOSED/OPEN/HALF-OPEN). Não define critério de
+          fechamento (como o circuito volta ao normal além de "tentar novamente"). Timeout
+          reduzido para 5–8s está correto em direção, mas sem critério de dimensionamento.
+          Estado do CB não é mencionado como compartilhado entre workers — incompatível
+          com a restrição de workers stateless.
+
+      - criterionId: retry_e_dlq
+        expectedScore: 2.5
+        rationale: |
+          Backoff exponencial presente com valores (10s, 20s, 40s). Porém os retries voltam
+          para a "fila principal com prioridade reduzida" — que é a fila única central, não
+          uma fila separada. O prompt penaliza isso explicitamente. Não menciona jitter. DLQ
+          descrita com retenção configurável e propósito de reprocessamento manual — parcialmente
+          correto, mas sem alertas de SLA ou metadados de diagnóstico estruturados.
+
+      - criterionId: tradeoffs
+        expectedScore: 2.0
+        rationale: |
+          Reconhece complexidade operacional de múltiplas filas como motivo para evitar essa
+          abordagem — irônico porque a própria solução proposta não resolve o problema. Menciona
+          simplificação de monitoramento. Não discute trade-offs reais da solução que efetivamente
+          propõe (prioridade em fila única). O reconhecimento de trade-offs existe mas está
+          aplicado na direção errada: justifica não adotar a solução correta em vez de analisar
+          os custos da solução proposta.
+
+    notes: |
+      expectedOverall = (0.5×0.35) + (2.0×0.35) + (2.5×0.20) + (2.0×0.10)
+                      = 0.175 + 0.70 + 0.50 + 0.20
+                      = 1.575 → arredondado para 1.58.
+      A resposta é misleading: usa terminologia correta (Circuit Breaker, backoff exponencial,
+      DLQ, prioridade ponderada), apresenta argumento de custo operacional para justificar
+      uma fila única, e parece estruturada e fundamentada. Mas falha no critério central de
+      maior peso (isolamento 0.35): fila única com prioridade não previne resource exhaustion,
+      e "adicionar workers" é explicitamente citado no prompt como solução inadequada.

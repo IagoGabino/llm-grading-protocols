@@ -1,0 +1,368 @@
+questionSlug: intermediate-notification-dry-wrapper
+
+answers:
+  - id: intermediate-notification-dry-wrapper-strong
+    profile: strong
+    variant: complete_correct
+    language: javascript
+
+    code: |
+      // notificationService.js
+      const MAX_RETRIES = 3;
+
+      async function withRetryAndLogs(label, sendFn) {
+        const startTime = Date.now();
+        let lastError;
+
+        for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+          console.log(`[${label}] Tentativa ${attempt}/${MAX_RETRIES} — iniciando envio`);
+          try {
+            await sendFn();
+            const elapsed = Date.now() - startTime;
+            console.log(`[${label}] Sucesso após ${elapsed}ms`);
+            return;
+          } catch (err) {
+            lastError = err;
+            console.error(`[${label}] Falha na tentativa ${attempt}: ${err.message}`);
+          }
+        }
+
+        throw lastError;
+      }
+
+      async function sendEmail(to, subject, body) {
+        await withRetryAndLogs('Email', () => emailApi.send({ to, subject, body }));
+      }
+
+      async function sendSms(phoneNumber, text) {
+        await withRetryAndLogs('SMS', () => smsApi.send({ phoneNumber, text }));
+      }
+
+      async function sendPushNotification(deviceToken, title, message) {
+        await withRetryAndLogs('Push', () => pushApi.send({ deviceToken, title, message }));
+      }
+
+      module.exports = { sendEmail, sendSms, sendPushNotification };
+
+    justification: |
+      Partes duplicadas identificadas:
+      As três funções originais duplicam exatamente três blocos de comportamento:
+      (1) o loop de retry com 3 tentativas e controle de lastError;
+      (2) a formatação de logs — log de início antes de cada tentativa, log de sucesso
+          com tempo de execução em ms, e log de falha com número da tentativa;
+      (3) o cálculo do tempo de execução com Date.now() e a propagação da última
+          exceção após esgotar as tentativas.
+
+      O que é específico de cada canal:
+      A montagem do objeto payload e a chamada à API externa (emailApi, smsApi,
+      pushApi) são exclusivas de cada canal e não foram movidas para o utilitário.
+
+      Abstração criada:
+      Extraí a Higher-Order Function withRetryAndLogs(label, sendFn) que encapsula
+      todo o comportamento transversal. Ela recebe o prefixo de log como label e
+      a operação específica do canal como função sendFn — sem nenhum if/else ou
+      switch por canal. As três funções públicas ficaram com uma única linha cada,
+      delegando completamente para o utilitário.
+
+      Vantagem de manutenção:
+      Se o requisito mudar de 3 para 5 tentativas, basta alterar MAX_RETRIES = 5 em
+      um único lugar. No código original, seria necessário editar as três funções
+      separadamente, com risco de inconsistência. O mesmo vale para qualquer mudança
+      no formato dos logs ou na lógica de retry.
+
+    expectedOverall: 4.90
+    expectedCriteria:
+      - criterionId: duplication_identification
+        expectedScore: 5.0
+        rationale: |
+          Nomeia explicitamente as três partes duplicadas: loop de retry com controle
+          de lastError, formatação de logs (início, sucesso com elapsed, falha com
+          número da tentativa) e cálculo de tempo de execução. Distingue claramente
+          o boilerplate (movido para o utilitário) da lógica específica de cada canal
+          (payload e chamada de API), que permanece nas funções individuais.
+
+      - criterionId: abstraction_extraction
+        expectedScore: 5.0
+        rationale: |
+          HOF withRetryAndLogs(label, sendFn) encapsula retry, todos os logs e tempo
+          de execução sem qualquer if/else ou switch por canal. O comportamento
+          específico é injetado via sendFn (arrow function). As três funções públicas
+          delegam completamente para o utilitário sem duplicar nenhuma lógica de
+          infraestrutura. Abstração correta, limpa e extensível.
+
+      - criterionId: behavior_preservation
+        expectedScore: 4.5
+        rationale: |
+          3 tentativas com MAX_RETRIES; log de início antes de cada tentativa com
+          número da tentativa e total; log de sucesso com elapsed em ms; log de falha
+          com número da tentativa e mensagem de erro; lastError propagado ao final.
+          Pequena penalização porque o log de início omite o contexto do destinatário
+          (ex.: "enviando para ${to}") que estava presente no original, mas preserva
+          toda a estrutura de comportamento de infraestrutura exigida pela rubrica.
+
+      - criterionId: public_signature_preservation
+        expectedScore: 5.0
+        rationale: |
+          sendEmail(to, subject, body), sendSms(phoneNumber, text) e
+          sendPushNotification(deviceToken, title, message) mantêm exatamente as
+          mesmas assinaturas do código original. Nenhum parâmetro foi adicionado,
+          removido ou reordenado.
+
+      - criterionId: reasoning
+        expectedScore: 5.0
+        rationale: |
+          Nomeia as três partes duplicadas, distingue boilerplate de lógica específica,
+          descreve a abstração criada e demonstra concretamente a vantagem de
+          manutenção: alterar MAX_RETRIES de 3 para 5 em um único lugar. Também
+          menciona o risco de inconsistência no código original. Justificativa completa
+          e precisa.
+
+    notes: |
+      expectedOverall = (5.0×0.20) + (5.0×0.35) + (4.5×0.20) + (5.0×0.15) + (5.0×0.10)
+                      = 1.00 + 1.75 + 0.90 + 0.75 + 0.50
+                      = 4.90.
+
+  - id: intermediate-notification-dry-wrapper-medium
+    profile: medium
+    variant: partial_correct
+    language: javascript
+
+    code: |
+      // notificationService.js
+      const MAX_RETRIES = 3;
+
+      async function withRetry(label, sendFn) {
+        let lastError;
+
+        for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+          console.log(`[${label}] Tentativa ${attempt} — enviando`);
+          try {
+            await sendFn();
+            console.log(`[${label}] Envio concluído com sucesso`);
+            return;
+          } catch (err) {
+            lastError = err;
+            console.error(`[${label}] Erro na tentativa ${attempt}: ${err.message}`);
+          }
+        }
+
+        throw lastError;
+      }
+
+      async function sendEmail(to, subject, body) {
+        await withRetry('Email', () => emailApi.send({ to, subject, body }));
+      }
+
+      async function sendSms(phoneNumber, text) {
+        await withRetry('SMS', () => smsApi.send({ phoneNumber, text }));
+      }
+
+      async function sendPushNotification(deviceToken, title, message) {
+        await withRetry('Push', () => pushApi.send({ deviceToken, title, message }));
+      }
+
+      module.exports = { sendEmail, sendSms, sendPushNotification };
+
+    justification: |
+      O código original duplica a lógica de retry e de logs nas três funções.
+      Extraí a função withRetry(label, sendFn) que centraliza o loop de retry com
+      3 tentativas e os logs de início e resultado. Cada função de envio específica
+      (sendEmail, sendSms, sendPushNotification) delega para withRetry passando o
+      label do canal e uma arrow function com a lógica específica do payload e API.
+
+      Com essa abstração, qualquer mudança no retry ou nos logs só precisa ser feita
+      em um lugar. As assinaturas públicas das três funções foram mantidas idênticas
+      ao código original.
+
+    expectedOverall: 3.68
+    expectedCriteria:
+      - criterionId: duplication_identification
+        expectedScore: 3.5
+        rationale: |
+          Identifica corretamente a duplicação do loop de retry e dos logs. Não nomeia
+          explicitamente as três partes separadas (retry, logs e cálculo de tempo de
+          execução) nem distingue formalmente boilerplate de lógica específica. A
+          justificativa menciona "retry e logs" de forma genérica, sem discriminar
+          log de início, sucesso e falha como três comportamentos distintos, e não
+          menciona a medição de tempo de execução como uma das partes duplicadas.
+
+      - criterionId: abstraction_extraction
+        expectedScore: 4.5
+        rationale: |
+          HOF withRetry(label, sendFn) criada corretamente: encapsula retry sem
+          if/else por canal, recebe comportamento específico via sendFn. As três
+          funções delegam sem duplicar lógica de infraestrutura. A penalização
+          reflete que a função se chama "withRetry" mas omite o cálculo de tempo
+          de execução — parte do comportamento transversal que deveria estar no
+          utilitário — tornando a abstração incompleta em relação ao requisito.
+
+      - criterionId: behavior_preservation
+        expectedScore: 2.0
+        rationale: |
+          Três tentativas preservadas com MAX_RETRIES. Logs de início e falha
+          presentes, mas divergem do comportamento especificado: (1) o log de início
+          não inclui o total de tentativas (`N/3`), apenas o número da tentativa;
+          (2) o log de sucesso não inclui o tempo de execução em ms — que era um
+          comportamento explicitamente especificado; (3) o log de falha usa "Erro"
+          em vez de "Falha", divergindo do formato original. São divergências
+          observáveis no comportamento de infraestrutura.
+
+      - criterionId: public_signature_preservation
+        expectedScore: 5.0
+        rationale: |
+          sendEmail(to, subject, body), sendSms(phoneNumber, text) e
+          sendPushNotification(deviceToken, title, message) mantêm exatamente as
+          mesmas assinaturas do código original. Nenhum parâmetro foi alterado.
+
+      - criterionId: reasoning
+        expectedScore: 2.5
+        rationale: |
+          Menciona que "qualquer mudança no retry ou nos logs só precisa ser feita
+          em um lugar", que é a vantagem de manutenção central. Porém não demonstra
+          com exemplo concreto (ex.: "alterar de 3 para 5 tentativas"), não nomeia
+          as três partes duplicadas individualmente e não distingue formalmente
+          boilerplate de lógica específica de canal. Justificativa funcional mas
+          incompleta nos pontos exigidos pela rubrica.
+
+    notes: |
+      expectedOverall = (3.5×0.20) + (4.5×0.35) + (2.0×0.20) + (5.0×0.15) + (2.5×0.10)
+                      = 0.70 + 1.575 + 0.40 + 0.75 + 0.25
+                      = 3.675 → arredondado para 3.68.
+      A lacuna real está em behavior_preservation: log de sucesso sem tempo de
+      execução e log de início sem total de tentativas são divergências observáveis
+      do comportamento especificado, não apenas estilo diferente.
+
+  - id: intermediate-notification-dry-wrapper-misleading
+    profile: misleading
+    variant: good_writing_low_coverage
+    language: javascript
+
+    code: |
+      // notificationService.js
+      const MAX_RETRIES = 3;
+
+      async function sendNotification(type, params) {
+        const startTime = Date.now();
+        let lastError;
+
+        for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+          console.log(`[${type}] Tentativa ${attempt}/${MAX_RETRIES} — iniciando envio`);
+          try {
+            if (type === 'Email') {
+              const { to, subject, body } = params;
+              await emailApi.send({ to, subject, body });
+            } else if (type === 'SMS') {
+              const { phoneNumber, text } = params;
+              await smsApi.send({ phoneNumber, text });
+            } else if (type === 'Push') {
+              const { deviceToken, title, message } = params;
+              await pushApi.send({ deviceToken, title, message });
+            }
+            const elapsed = Date.now() - startTime;
+            console.log(`[${type}] Sucesso após ${elapsed}ms`);
+            return;
+          } catch (err) {
+            lastError = err;
+            console.error(`[${type}] Falha na tentativa ${attempt}: ${err.message}`);
+          }
+        }
+
+        throw lastError;
+      }
+
+      async function sendEmail(to, subject, body) {
+        await sendNotification('Email', { to, subject, body });
+      }
+
+      async function sendSms(phoneNumber, text) {
+        await sendNotification('SMS', { phoneNumber, text });
+      }
+
+      async function sendPushNotification(deviceToken, title, message) {
+        await sendNotification('Push', { deviceToken, title, message });
+      }
+
+      module.exports = { sendEmail, sendSms, sendPushNotification };
+
+    justification: |
+      O código original duplicava a mesma lógica de retry, logs e tempo de execução
+      nas três funções. Centralizei tudo em uma função genérica sendNotification(type, params)
+      que encapsula retry com 3 tentativas, todos os logs e cálculo de tempo.
+
+      A lógica de cada canal (payload e API) ficou dentro da mesma função, controlada
+      pelo parâmetro type. Isso elimina completamente a duplicação: agora existe apenas
+      um loop, um bloco de log e um bloco de try/catch para os três canais.
+
+      As assinaturas públicas de sendEmail, sendSms e sendPushNotification foram
+      mantidas idênticas. Para adicionar um novo canal, basta acrescentar um else if
+      em sendNotification — toda a lógica de infraestrutura já está centralizada.
+
+      Se o número de tentativas mudar de 3 para 5, basta alterar MAX_RETRIES em um
+      único lugar. O código ficou significativamente mais curto e fácil de entender.
+
+    expectedOverall: 2.90
+    expectedCriteria:
+      - criterionId: duplication_identification
+        expectedScore: 4.0
+        rationale: |
+          Identifica corretamente que retry, logs e cálculo de tempo estão duplicados.
+          Nomeia o problema de forma adequada. Não distingue formalmente boilerplate
+          de lógica específica de canal, mas o diagnóstico da duplicação está correto.
+          A penalização reflete que a justificativa não separa as três partes
+          individualmente e não nomeia a medição de tempo como item próprio.
+
+      - criterionId: abstraction_extraction
+        expectedScore: 1.0
+        rationale: |
+          sendNotification(type, params) é um "falso DRY": concentra retry e logs
+          em um único lugar (correto), mas mistura a lógica específica dos três
+          canais em if/else dentro da mesma função. O prompt é explícito: soluções
+          que usam if/else ou switch por canal dentro do utilitário devem ser
+          fortemente penalizadas em abstraction_extraction. A lógica de email, SMS
+          e push está acoplada em um único ponto: adicionar um novo canal exige
+          modificar sendNotification (viola Open-Closed Principle) e a função não
+          pode ser reutilizada sem conhecer os tipos de canal. Não é uma abstração
+          reutilizável adequada.
+
+      - criterionId: behavior_preservation
+        expectedScore: 4.0
+        rationale: |
+          3 tentativas com MAX_RETRIES; log de início antes de cada tentativa com
+          número e total (`attempt/MAX_RETRIES`); log de sucesso com elapsed em ms;
+          log de falha com número da tentativa e mensagem de erro; lastError
+          propagado após esgotar as tentativas. O comportamento de infraestrutura
+          especificado está integralmente preservado. A penalização reflete que o
+          log de início omite o contexto específico do destinatário (presente no
+          original), mas todos os comportamentos exigidos pela rubrica estão
+          presentes e corretos. O acoplamento com if/else é problema de abstração,
+          não de comportamento.
+
+      - criterionId: public_signature_preservation
+        expectedScore: 5.0
+        rationale: |
+          sendEmail(to, subject, body), sendSms(phoneNumber, text) e
+          sendPushNotification(deviceToken, title, message) mantêm exatamente as
+          mesmas assinaturas externas do código original. Nenhum parâmetro foi
+          adicionado, removido ou reordenado. A transformação interna para o objeto
+          params é um detalhe de implementação que não afeta o contrato público
+          observado pelos consumidores das funções.
+
+      - criterionId: reasoning
+        expectedScore: 2.0
+        rationale: |
+          Demonstra o exemplo concreto de MAX_RETRIES ("basta alterar MAX_RETRIES
+          em um único lugar"), que é o argumento de manutenção correto. Porém o
+          argumento de extensibilidade está invertido: afirma que "adicionar um novo
+          canal é só acrescentar um else if", que é justamente o anti-padrão da
+          abordagem. Não nomeia as três partes duplicadas individualmente nem
+          distingue boilerplate de lógica específica de canal.
+
+    notes: |
+      expectedOverall = (4.0×0.20) + (1.0×0.35) + (4.0×0.20) + (5.0×0.15) + (2.0×0.10)
+                      = 0.80 + 0.35 + 0.80 + 0.75 + 0.20
+                      = 2.90.
+      A resposta é misleading porque falha no critério central (abstraction_extraction
+      peso 0.35): o falso DRY com if/else por canal é explicitamente penalizado pelo
+      prompt. O que a torna convincente é que preserva corretamente comportamento e
+      assinaturas públicas — um avaliador superficial pode dar nota alta sem perceber
+      que menos duplicação visual não equivale a boa abstração.

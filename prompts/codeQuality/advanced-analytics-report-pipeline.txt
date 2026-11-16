@@ -1,0 +1,49 @@
+Você é um avaliador de Engenharia de Software.
+Avalie a resposta do aluno para a questão de ELIMINAÇÃO DE DUPLICAÇÃO E REÚSO abaixo usando a rubrica fornecida.
+Responda ESTRITAMENTE com um JSON válido no formato especificado ao final.
+
+[QUESTÃO / ENUNCIADO]
+{{{enunciado}}}
+
+[RUBRICA DE AVALIAÇÃO]
+{{{rubrica}}}
+
+[PONTOS ESPERADOS NA RESPOSTA]
+{{{pontos_esperados}}}
+
+[RESPOSTA DO ALUNO]
+Código:
+{{{codigo}}}
+
+Justificativa:
+{{{raciocinio}}}
+
+[INSTRUÇÕES DE AVALIAÇÃO]
+- Atribua notas de 0 a 5 por critério (números decimais permitidos, ex.: 4.5).
+- Verifique explicitamente:
+  (1) O aluno identificou e nomeou as cinco etapas duplicadas (validação, filtragem/ordenação, seleção de campos, cálculo de totais, auditoria) e as distinguiu claramente da serialização específica de cada formato?
+  (2) Foi criado um pipeline comum reutilizável (Higher-Order Function, função de template, método de template ou equivalente) que centraliza as cinco etapas compartilhadas e recebe a serialização como ponto de variação — sem conter condicionais (if/switch) baseadas no formato dentro do pipeline?
+  (3) Cada serializador (CSV, JSON, HTML) está isolado do pipeline comum e não contém nenhuma das cinco etapas compartilhadas? O pipeline não vaza lógica de formato para dentro das etapas comuns?
+  (4) As três assinaturas públicas (exportToCsv, exportToJson, exportToHtml) permanecem idênticas ao código original? Validação, filtragem, ordenação, projeção, totais e auditoria têm comportamento preservado (mesma mensagem de erro, mesmos campos projetados, mesma lógica de auditoria)?
+  (5) A justificativa nomeia a abstração escolhida, explica por que ela elimina a duplicação estrutural sem criar generalização excessiva, e discute trade-offs em relação a alternativas (ex.: pipeline com switch por formato seria falso DRY; hierarquia de classes profunda seria over-engineering)?
+- Use "evidence" com trechos objetivos do código ou da justificativa do aluno (citações curtas).
+- Consistência: a soma ponderada dos critérios deve refletir a nota "overall".
+- Penalize soluções de "falso DRY": se o aluno extraiu uma função genérica mas ela contém condicionais baseadas no formato (if format === 'csv', switch(format)), penalize em "pipeline_extraction" e "variation_isolation", pois isso não é pipeline reutilizável — é apenas centralização de condicionais.
+- Penalize modularidade local sem reutilização real: se o aluno apenas extraiu as cinco etapas em funções privadas usadas independentemente em cada exportador, as cinco etapas continuam duplicadas estruturalmente (uma chamada por exportador). Penalize em "pipeline_extraction".
+- Se o pipeline ainda contém condicionais baseadas no formato de saída, penalize fortemente em "variation_isolation".
+- Se qualquer assinatura pública foi alterada (parâmetros adicionados, removidos ou reordenados), penalize em "behavior_preservation".
+- Se a validação, filtragem, ordenação, projeção ou auditoria divergirem do especificado (ex.: campo errado projetado, filtro userId ignorado, mensagem de erro diferente), penalize em "behavior_preservation".
+- Se a justificativa não discute trade-offs ou não nomeia a abstração, penalize em "reasoning".
+
+[FORMATO DE SAÍDA — JSON]
+{
+  "overall": 0-5 (decimal),
+  "criteria": [
+    { "id": "duplication_identification", "score": 0-5 (decimal), "weight": 0.20, "evidence": "…", "comment": "…" },
+    { "id": "pipeline_extraction",        "score": 0-5 (decimal), "weight": 0.35, "evidence": "…", "comment": "…" },
+    { "id": "variation_isolation",        "score": 0-5 (decimal), "weight": 0.20, "evidence": "…", "comment": "…" },
+    { "id": "behavior_preservation",      "score": 0-5 (decimal), "weight": 0.15, "evidence": "…", "comment": "…" },
+    { "id": "reasoning",                  "score": 0-5 (decimal), "weight": 0.10, "evidence": "…", "comment": "…" }
+  ],
+  "feedback": "comentário geral conciso focado na qualidade do pipeline extraído, no isolamento dos pontos de variação e na preservação do comportamento das funções públicas"
+}

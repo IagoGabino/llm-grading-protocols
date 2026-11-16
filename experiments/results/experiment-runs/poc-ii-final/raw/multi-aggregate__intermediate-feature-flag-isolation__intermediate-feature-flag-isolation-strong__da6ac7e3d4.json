@@ -1,0 +1,68 @@
+{
+  "runId": "multi-aggregate__intermediate-feature-flag-isolation__intermediate-feature-flag-isolation-strong__da6ac7e3d4",
+  "rawOutputs": [
+    {
+      "output": "{\n  \"overall\": 5,\n  \"criteria\": [\n    {\n      \"id\": \"root_cause_diagnosis\",\n      \"score\": 5,\n      \"weight\": 0.3,\n      \"evidence\": [\n        \"O FeatureFlagManager é um Singleton — existe uma única instância compartilhada em todo o processo.\",\n        \"O Test A chama featureFlags.set('NEW_UI', true) e nunca invoca reset().\",\n        \"Quando a suíte roda em sequência (Test A → Test B), o estado mutado por Test A permanece ativo na instância compartilhada.\",\n        \"Test B assume que NEW_UI começa em false (estado inicial), mas encontra true e falha.\",\n        \"Como o estado depende da ordem de execução dos testes, o bug se manifesta como Flaky Test: cada teste passa isoladamente, mas falham em conjunto.\"\n      ],\n      \"comment\": \"O aluno diagnosticou a causa raiz de forma excelente, identificando o Singleton e o vazamento de estado como o problema central que leva aos Flaky Tests.\"\n    },\n    {\n      \"id\": \"teardown_implementation\",\n      \"score\": 5,\n      \"weight\": 0.35,\n      \"evidence\": [\n        \"afterEach(() => { featureFlags.reset(); });\",\n        \"Introduzi afterEach(() => featureFlags.reset()). O afterEach é executado pelo Jest após cada teste do describe, garantindo que o estado do Singleton seja restaurado ao estado inicial independentemente do que o teste fez.\"\n      ],\n      \"comment\": \"A implementação do hook `afterEach` com a chamada a `featureFlags.reset()` está correta e no local adequado, garantindo a limpeza do estado após cada teste.\"\n    },\n    {\n      \"id\": \"determinism\",\n      \"score\": 5,\n      \"weight\": 0.25,\n      \"evidence\": [\n        \"Com o afterEach, ao final de qualquer teste o estado é resetado. Isso torna a suíte determinística em qualquer ordem:\",\n        \"- Test A → Test B: Test A seta NEW_UI, afterEach reseta, Test B encontra estado limpo. ✅\",\n        \"- Test B → Test A: Test B encontra estado limpo (nunca foi alterado), afterEach reseta (no-op), Test A seta NEW_UI e passa. ✅\",\n        \"Cada teste é completamente independente do histórico de execução dos demais.\"\n      ],\n      \"comment\": \"O aluno demonstrou claramente como a solução garante o determinismo e a independência da ordem de execução, cobrindo ambos os cenários de execução.\"\n    },\n    {\n      \"id\": \"conceptual_justification\",\n      \"score\": 5,\n      \"weight\": 0.1,\n      \"evidence\": [\n        \"Usar afterEach em vez de adicionar reset() manualmente dentro de cada teste é preferível porque: (1) centraliza a limpeza em um único lugar, (2) protege todos os testes presentes e futuros automaticamente, e (3) explicita a intenção de isolamento no próprio setup da suíte.\",\n        \"Cada teste é completamente independente do histórico de execução dos demais.\"\n      ],\n      \"comment\": \"A justificativa conceitual é sólida, explicando a importância do isolamento de testes e como o `afterEach` contribui para isso, centralizando a lógica de limpeza e protegendo testes futuros.\"\n    }\n  ],\n  \"feedback\": \"Excelente trabalho! Sua refatoração da suíte de testes é impecável. Você diagnosticou a causa raiz do Flaky Test de forma precisa, identificando o problema do estado compartilhado em um Singleton. A implementação do `afterEach` para resetar o `FeatureFlagManager` após cada teste é a solução correta e demonstra um entendimento profundo dos hooks de ciclo de vida de testes. A justificativa é clara e concisa, explicando como a solução garante o determinismo e a independência da ordem de execução, além de articular a importância do isolamento de testes. Sua resposta atende a todos os critérios da rubrica de forma exemplar.\"\n}",
+      "model": "google/gemini-2.5-flash",
+      "callIndex": 1,
+      "metadata": {
+        "engineStatus": "success",
+        "usage": {
+          "promptTokens": 2638,
+          "completionTokens": 898,
+          "totalTokens": 3536,
+          "reasoningTokens": 0,
+          "cachedTokens": 0,
+          "cacheWriteTokens": 0,
+          "costCredits": 0.0030364,
+          "upstreamInferenceCost": 0.0030364
+        },
+        "subcallIndex": 1,
+        "promptVariantId": "rubric_adherence",
+        "promptVariantInstruction": "Nesta avaliação, priorize a aderência estrita à rubrica. Atribua os scores considerando cuidadosamente os critérios, descritores e pesos definidos. Penalize respostas que pareçam boas de forma geral, mas que não atendam explicitamente ao que o critério avalia. Não use critérios externos à rubrica."
+      }
+    },
+    {
+      "output": "{\n  \"overall\": 5,\n  \"criteria\": [\n    {\n      \"id\": \"root_cause_diagnosis\",\n      \"score\": 5,\n      \"weight\": 0.3,\n      \"evidence\": [\n        \"O FeatureFlagManager é um Singleton — existe uma única instância compartilhada em todo o processo.\",\n        \"O Test A chama featureFlags.set('NEW_UI', true) e nunca invoca reset().\",\n        \"Quando a suíte roda em sequência (Test A → Test B), o estado mutado por Test A permanece ativo na instância compartilhada.\",\n        \"Test B assume que NEW_UI começa em false (estado inicial), mas encontra true e falha.\",\n        \"Como o estado depende da ordem de execução dos testes, o bug se manifesta como Flaky Test: cada teste passa isoladamente, mas falham em conjunto.\"\n      ],\n      \"comment\": \"O aluno diagnosticou a causa raiz de forma excelente, identificando o Singleton e o vazamento de estado como a origem do Flaky Test.\"\n    },\n    {\n      \"id\": \"teardown_implementation\",\n      \"score\": 5,\n      \"weight\": 0.35,\n      \"evidence\": [\n        \"afterEach(() => { featureFlags.reset(); });\"\n      ],\n      \"comment\": \"O aluno implementou corretamente o hook `afterEach` do Jest para resetar o estado do `FeatureFlagManager` após cada teste, garantindo a limpeza necessária.\"\n    },\n    {\n      \"id\": \"determinism\",\n      \"score\": 5,\n      \"weight\": 0.25,\n      \"evidence\": [\n        \"Com o afterEach, ao final de qualquer teste o estado é resetado. Isso torna a suíte determinística em qualquer ordem:\",\n        \"- Test A → Test B: Test A seta NEW_UI, afterEach reseta, Test B encontra estado limpo. ✅\",\n        \"- Test B → Test A: Test B encontra estado limpo (nunca foi alterado), afterEach reseta (no-op), Test A seta NEW_UI e passa. ✅\",\n        \"Cada teste é completamente independente do histórico de execução dos demais.\"\n      ],\n      \"comment\": \"A justificativa do aluno demonstra claramente que a solução garante o determinismo e a independência da ordem de execução, cobrindo ambos os cenários de execução.\"\n    },\n    {\n      \"id\": \"conceptual_justification\",\n      \"score\": 5,\n      \"weight\": 0.1,\n      \"evidence\": [\n        \"Usar afterEach em vez de adicionar reset() manualmente dentro de cada teste é preferível porque: (1) centraliza a limpeza em um único lugar, (2) protege todos os testes presentes e futuros automaticamente, e (3) explicita a intenção de isolamento no próprio setup da suíte.\",\n        \"Cada teste é completamente independente do histórico de execução dos demais.\"\n      ],\n      \"comment\": \"A justificativa conceitual é sólida, explicando os benefícios do `afterEach` para centralização e isolamento, e como isso contribui para a independência dos testes.\"\n    }\n  ],\n  \"feedback\": \"Excelente trabalho! A refatoração da suíte de testes está impecável. Você demonstrou um entendimento profundo sobre a causa raiz dos Flaky Tests relacionados a estado compartilhado (Singleton) e aplicou o hook `afterEach` de forma exemplar para garantir o isolamento e o determinismo dos testes. A justificativa é clara, concisa e aborda todos os pontos essenciais, incluindo a importância do isolamento de testes e como a solução garante que a ordem de execução não afete o resultado. A centralização da limpeza no `afterEach` é uma prática recomendada que melhora a manutenibilidade e robustez da suíte. Muito bem!\"\n}",
+      "model": "google/gemini-2.5-flash",
+      "callIndex": 2,
+      "metadata": {
+        "engineStatus": "success",
+        "usage": {
+          "promptTokens": 2632,
+          "completionTokens": 844,
+          "totalTokens": 3476,
+          "reasoningTokens": 0,
+          "cachedTokens": 0,
+          "cacheWriteTokens": 0,
+          "costCredits": 0.0028996,
+          "upstreamInferenceCost": 0.0028996
+        },
+        "subcallIndex": 2,
+        "promptVariantId": "textual_evidence",
+        "promptVariantInstruction": "Nesta avaliação, priorize evidências textuais presentes na resposta avaliada. Ao atribuir os scores, considere principalmente o que está explicitamente demonstrado no texto. Evite inferir conhecimento implícito quando ele não estiver sustentado por trechos, argumentos, exemplos ou explicações presentes na resposta."
+      }
+    },
+    {
+      "output": "{\n  \"overall\": 5,\n  \"criteria\": [\n    {\n      \"id\": \"root_cause_diagnosis\",\n      \"score\": 5,\n      \"weight\": 0.3,\n      \"evidence\": [\n        \"O FeatureFlagManager é um Singleton — existe uma única instância compartilhada em todo o processo.\",\n        \"O Test A chama featureFlags.set('NEW_UI', true) e nunca invoca reset().\",\n        \"Quando a suíte roda em sequência (Test A → Test B), o estado mutado por Test A permanece ativo na instância compartilhada.\",\n        \"Test B assume que NEW_UI começa em false (estado inicial), mas encontra true e falha.\",\n        \"Como o estado depende da ordem de execução dos testes, o bug se manifesta como Flaky Test: cada teste passa isoladamente, mas falham em conjunto.\"\n      ],\n      \"comment\": \"O aluno diagnosticou corretamente a causa raiz do problema, identificando o Singleton e o vazamento de estado como os principais fatores para o Flaky Test.\"\n    },\n    {\n      \"id\": \"teardown_implementation\",\n      \"score\": 5,\n      \"weight\": 0.35,\n      \"evidence\": [\n        \"afterEach(() => { featureFlags.reset(); });\"\n      ],\n      \"comment\": \"O aluno implementou corretamente o hook `afterEach` do Jest para resetar o estado do `FeatureFlagManager` após cada teste, garantindo a limpeza necessária.\"\n    },\n    {\n      \"id\": \"determinism\",\n      \"score\": 5,\n      \"weight\": 0.25,\n      \"evidence\": [\n        \"Com o afterEach, ao final de qualquer teste o estado é resetado. Isso torna a suíte determinística em qualquer ordem:\",\n        \"- Test A → Test B: Test A seta NEW_UI, afterEach reseta, Test B encontra estado limpo. ✅\",\n        \"- Test B → Test A: Test B encontra estado limpo (nunca foi alterado), afterEach reseta (no-op), Test A seta NEW_UI e passa. ✅\"\n      ],\n      \"comment\": \"A solução proposta pelo aluno garante o determinismo e a independência da ordem de execução dos testes, conforme demonstrado na justificativa.\"\n    },\n    {\n      \"id\": \"conceptual_justification\",\n      \"score\": 5,\n      \"weight\": 0.1,\n      \"evidence\": [\n        \"Usar afterEach em vez de adicionar reset() manualmente dentro de cada teste é preferível porque: (1) centraliza a limpeza em um único lugar, (2) protege todos os testes presentes e futuros automaticamente, e (3) explicita a intenção de isolamento no próprio setup da suíte.\",\n        \"Cada teste é completamente independente do histórico de execução dos demais.\"\n      ],\n      \"comment\": \"A justificativa conceitual é clara e articula bem a importância do isolamento de testes e como o `afterEach` contribui para isso, centralizando a limpeza e protegendo testes futuros.\"\n    }\n  ],\n  \"feedback\": \"Excelente refatoração da suíte de testes! O diagnóstico da causa raiz foi preciso, identificando corretamente o problema do estado compartilhado em um Singleton. A implementação do `afterEach` para resetar o `FeatureFlagManager` é a solução ideal, garantindo que cada teste comece de um estado limpo e seja independente dos demais. A justificativa conceitual é muito bem articulada, explicando a importância do isolamento de testes e como o hook escolhido assegura o determinismo da suíte. O código está limpo e a explicação é completa e concisa.\"\n}",
+      "model": "google/gemini-2.5-flash",
+      "callIndex": 3,
+      "metadata": {
+        "engineStatus": "success",
+        "usage": {
+          "promptTokens": 2634,
+          "completionTokens": 813,
+          "totalTokens": 3447,
+          "reasoningTokens": 0,
+          "cachedTokens": 0,
+          "cacheWriteTokens": 0,
+          "costCredits": 0.0028227,
+          "upstreamInferenceCost": 0.0028227
+        },
+        "subcallIndex": 3,
+        "promptVariantId": "conceptual_coverage",
+        "promptVariantInstruction": "Nesta avaliação, priorize a cobertura conceitual da resposta. Verifique se os conceitos centrais esperados foram abordados de maneira correta e suficiente, mesmo que a organização, redação ou terminologia não sejam ideais. Penalize omissões conceituais relevantes e confusões entre conceitos importantes."
+      }
+    }
+  ]
+}

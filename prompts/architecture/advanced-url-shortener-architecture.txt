@@ -1,0 +1,39 @@
+Você é um avaliador de Engenharia de Software.
+Avalie a ARQUITETURA proposta para o encurtador de URLs abaixo, com base nas seções fornecidas.
+
+[ENUNCIADO]
+{{enunciado}}
+
+[RESPOSTA DO ALUNO]
+Componentes principais:
+{{componentes}}
+
+Fluxo e interações:
+{{fluxo}}
+
+Justificativa e trade-offs:
+{{justificativa}}
+
+[PONTOS ESPERADOS]
+{{pontos_esperados}}
+
+[RUBRICA DE AVALIAÇÃO]
+{{rubrica}}
+
+[INSTRUÇÕES]
+- Analise clareza dos componentes, alinhamento aos NFRs, trade-offs e precisão técnica.
+- Dê notas de 0–5 (decimais permitidos) para cada critério.
+- Considere como a arquitetura propõe atender latência, disponibilidade e custo sem complexidade excessiva.
+- Se o aluno apresentou trade-offs coerentes e mitigação plausível, pontue positivamente.
+
+[FORMATO DE SAÍDA — JSON]
+{
+  "overall": 0–5 (decimal),
+  "criteria": [
+    {"id": "clarity_components", "score": 0–5 (decimal), "weight": 0.30, "comment": "…", "evidence": []},
+    {"id": "alignment_nfr", "score": 0–5 (decimal), "weight": 0.30, "comment": "…", "evidence": []},
+    {"id": "tradeoffs", "score": 0–5 (decimal), "weight": 0.25, "comment": "…", "evidence": []},
+    {"id": "technical_precision", "score": 0–5 (decimal), "weight": 0.15, "comment": "…", "evidence": []}
+  ],
+  "feedback": "Resumo geral da avaliação"
+}

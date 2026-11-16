@@ -1,0 +1,40 @@
+Avalie a correção de BUG da resposta do aluno para a questão abaixo usando a rubrica fornecida.
+
+[QUESTÃO / ENUNCIADO]
+{{{enunciado}}}
+
+[RUBRICA DE AVALIAÇÃO]
+{{{rubrica}}}
+
+[PONTOS ESPERADOS NA RESPOSTA]
+{{{pontos_esperados}}}
+
+[RESPOSTA DO ALUNO]
+Código:
+{{{codigo}}}
+
+Raciocínio:
+{{{raciocinio}}}
+
+[INSTRUÇÕES DE AVALIAÇÃO]
+- Atribua notas de 0 a 5 por critério (números decimais permitidos, ex.: 3.5).
+- Verifique explicitamente:
+  (1) se o aluno identifica o nível exato do caminho onde o crash ocorre (acesso a `.address` sobre `undefined`/`null`, ou `.city`/`.state` sobre `undefined`/`null`);
+  (2) se a correção usa navegação segura adequada à linguagem — optional chaining `?.` (JS), `.get()` encadeado (Python) ou `if`-guards / `Optional` (Java) — e não apenas um `try/catch` global que mascara a causa;
+  (3) se o retorno é exatamente `"Localização desconhecida"` (e não `null`, string vazia, `undefined` ou outra variação) em todos os casos de ausência;
+  (4) se o código evita pirâmide de `if` aninhados quando a linguagem oferece operador nativo mais conciso (penalize em `code_quality` se o aluno usar JS e não usar `?.`).
+- Use "evidence" com trechos objetivos da resposta do aluno (citações curtas do código ou do raciocínio).
+- Consistência: a soma ponderada dos critérios deve refletir a nota "overall".
+- Se a resposta estiver vazia ou incoerente, explique por quê no feedback.
+
+[FORMATO DE SAÍDA — JSON]
+{
+  "overall": 0-5 (decimal),
+  "criteria": [
+    { "id": "root_cause",       "score": 0-5 (decimal), "weight": 0.35, "evidence": "…", "comment": "…" },
+    { "id": "functional_fix",   "score": 0-5 (decimal), "weight": 0.35, "evidence": "…", "comment": "…" },
+    { "id": "fallback_correctness", "score": 0-5 (decimal), "weight": 0.20, "evidence": "…", "comment": "…" },
+    { "id": "code_quality",     "score": 0-5 (decimal), "weight": 0.10, "evidence": "…", "comment": "…" }
+  ],
+  "feedback": "comentário geral conciso"
+}

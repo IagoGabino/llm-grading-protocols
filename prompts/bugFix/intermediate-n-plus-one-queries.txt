@@ -1,0 +1,44 @@
+Avalie a correção de BUG da resposta do aluno para a questão abaixo usando a rubrica fornecida.
+
+[QUESTÃO / ENUNCIADO]
+{{{enunciado}}}
+
+[RUBRICA DE AVALIAÇÃO]
+{{{rubrica}}}
+
+[PONTOS ESPERADOS NA RESPOSTA]
+{{{pontos_esperados}}}
+
+[RESPOSTA DO ALUNO]
+Código:
+{{{codigo}}}
+
+Justificativa:
+{{{raciocinio}}}
+
+[INSTRUÇÕES DE AVALIAÇÃO]
+- Atribua notas de 0 a 5 por critério (números decimais permitidos, ex.: 3.5).
+- Verifique explicitamente:
+  (1) O aluno identifica que o loop gera uma query por fatura e explica por que isso resulta em N+1 idas ao banco.
+  (2) O aluno extrai os customer_ids únicos (usando Set, dicionário, HashSet ou equivalente) e executa uma única query com cláusula IN para buscar todos os clientes de uma vez, reduzindo o total de queries para 2 no caso normal. Para lista vazia de faturas, é aceitável retornar lista vazia sem executar a segunda query.  (3) O aluno constrói um dicionário/mapa de customer_id → customer para associar clientes às faturas com acesso O(1) por lookup, e NÃO usa find/filter/stream dentro do loop de faturas (o que seria O(N²)).
+  (4) A função retorna exatamente o mesmo formato que o código original — lista de faturas com a propriedade customer preenchida — sem alterar a assinatura pública nem omitir campos.
+- Use "evidence" com trechos objetivos do código (cite estruturas de dados, nomes de variáveis, queries e chamadas a db.query).
+- Consistência: a soma ponderada dos critérios deve refletir a nota "overall".
+- Se o código ainda executa uma query por fatura dentro de um loop, penalize fortemente em "batching_fix".
+- Se o aluno usa find/filter/stream dentro do loop de associação (abordagem O(N²)), penalize fortemente em "memory_join".
+- Se a função não retorna faturas com a propriedade customer preenchida ou altera a assinatura pública, penalize fortemente em "contract_preservation".
+- Se o aluno não explica a causa raiz do N+1, penalize em "root_cause" mesmo que o código esteja correto.
+- Se a lista de faturas estiver vazia, não penalize soluções que retornam imediatamente [] sem executar a segunda query de clientes. Nesse caso, o comportamento continua compatível com o contrato.
+- Não trate soluções com JOIN como resposta plenamente correta nesta questão, mesmo que eliminem N+1. O enunciado exige especificamente batching em duas etapas: buscar faturas, buscar clientes com IN e associar em memória com mapa.
+
+[FORMATO DE SAÍDA — JSON]
+{
+  "overall": 0-5 (decimal),
+  "criteria": [
+    { "id": "root_cause",           "score": 0-5 (decimal), "weight": 0.25, "evidence": "...", "comment": "..." },
+    { "id": "batching_fix",         "score": 0-5 (decimal), "weight": 0.35, "evidence": "...", "comment": "..." },
+    { "id": "memory_join",          "score": 0-5 (decimal), "weight": 0.25, "evidence": "...", "comment": "..." },
+    { "id": "contract_preservation","score": 0-5 (decimal), "weight": 0.15, "evidence": "...", "comment": "..." }
+  ],
+  "feedback": "comentário geral conciso focado em N+1 queries, batching com IN, associação em memória e preservação do contrato"
+}

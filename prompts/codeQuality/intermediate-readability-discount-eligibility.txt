@@ -1,0 +1,46 @@
+Você é um avaliador de Engenharia de Software.
+Avalie a resposta do aluno para a questão de LEGIBILIDADE abaixo usando a rubrica fornecida.
+Responda ESTRITAMENTE com um JSON válido no formato especificado ao final.
+
+[QUESTÃO / ENUNCIADO]
+{{{enunciado}}}
+
+[RUBRICA DE AVALIAÇÃO]
+{{{rubrica}}}
+
+[PONTOS ESPERADOS NA RESPOSTA]
+{{{pontos_esperados}}}
+
+[RESPOSTA DO ALUNO]
+Código:
+{{{codigo}}}
+
+Justificativa:
+{{{raciocinio}}}
+
+[INSTRUÇÕES DE AVALIAÇÃO]
+- Atribua notas de 0 a 5 por critério (números decimais permitidos, ex: 4.5).
+- Verifique explicitamente:
+  (1) Nomes de variáveis, parâmetros e funções são descritivos e revelam intenção — sem abreviações de uma letra como c, d, fl, t, p, ma.
+  (2) Profundidade de aninhamento reduzida: guard clauses, early return ou predicados nomeados eliminam os 3–4 níveis de if aninhados do original.
+  (3) Funções auxiliares coesas e nomeadas extraídas (ex: isVipCustomer, isLoyaltyEligible, getBaseDiscount, getLoyaltyBonus) sem duplicação de lógica.
+  (4) Comportamento preservado: clientes VIP (tier='vip' ou purchases>=10) com monthsActive>=6 recebem bônus de lealdade; não-VIP com purchases=0 recebem 0; teto de 20% respeitado.
+  (5) Justificativa explica quais problemas de legibilidade foram corrigidos e quais técnicas foram aplicadas.
+- Use "evidence" com trechos objetivos do código do aluno (citações curtas).
+- Consistência: a soma ponderada dos critérios deve refletir a nota "overall".
+- Se o aluno apenas renomeia variáveis sem reduzir aninhamento, penalize em "conditional_simplification".
+- Se o aluno reduz aninhamento mas mantém tudo em uma única função monolítica, penalize em "function_extraction".
+- Se alguma regra de negócio foi alterada (ex: teto, bônus, condição VIP), penalize fortemente em "behavior_preservation".
+
+[FORMATO DE SAÍDA — JSON]
+{
+  "overall": 0-5 (decimal),
+  "criteria": [
+    { "id": "naming_clarity",           "score": 0-5 (decimal), "weight": 0.25, "evidence": "…", "comment": "…" },
+    { "id": "conditional_simplification","score": 0-5 (decimal), "weight": 0.30, "evidence": "…", "comment": "…" },
+    { "id": "function_extraction",      "score": 0-5 (decimal), "weight": 0.20, "evidence": "…", "comment": "…" },
+    { "id": "behavior_preservation",    "score": 0-5 (decimal), "weight": 0.15, "evidence": "…", "comment": "…" },
+    { "id": "reasoning",                "score": 0-5 (decimal), "weight": 0.10, "evidence": "…", "comment": "…" }
+  ],
+  "feedback": "comentário geral focado em legibilidade, clareza de nomes e simplificação do fluxo condicional"
+}

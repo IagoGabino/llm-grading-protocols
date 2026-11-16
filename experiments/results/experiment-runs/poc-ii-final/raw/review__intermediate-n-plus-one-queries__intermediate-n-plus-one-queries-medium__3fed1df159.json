@@ -1,0 +1,41 @@
+{
+  "runId": "review__intermediate-n-plus-one-queries__intermediate-n-plus-one-queries-medium__3fed1df159",
+  "rawOutputs": [
+    {
+      "output": "{\n  \"overall\": 3.35,\n  \"criteria\": [\n    {\n      \"id\": \"root_cause\",\n      \"score\": 5,\n      \"weight\": 0.25,\n      \"evidence\": [\n        \"O problema do código original é que ele executa uma query de banco de dados dentro do loop, o que gera N queries adicionais para N faturas — somando N+1 ao total. Isso é lento porque cada query tem latência de rede e disco.\"\n      ],\n      \"comment\": \"O aluno identificou corretamente a causa raiz do problema N+1 e explicou o impacto na performance.\"\n    },\n    {\n      \"id\": \"batching_fix\",\n      \"score\": 5,\n      \"weight\": 0.35,\n      \"evidence\": [\n        \"const customerIds = invoices.map(i => i.customer_id);\",\n        \"const uniqueIds = [...new Set(customerIds)];\",\n        \"if (uniqueIds.length === 0) { return invoices; }\",\n        \"const placeholders = uniqueIds.map(() => '?').join(', ');\",\n        \"const customers = await db.query(`SELECT * FROM customers WHERE id IN (${placeholders})`, uniqueIds);\"\n      ],\n      \"comment\": \"O aluno implementou corretamente o batching, extraindo IDs únicos e usando uma única query com IN. O tratamento para lista vazia de IDs também está correto.\"\n    },\n    {\n      \"id\": \"memory_join\",\n      \"score\": 0,\n      \"weight\": 0.25,\n      \"evidence\": [\n        \"for (const invoice of invoices) { invoice.customer = customers.find(c => c.id === invoice.customer_id) || null; }\"\n      ],\n      \"comment\": \"O aluno utilizou `customers.find()` dentro do loop de faturas, o que resulta em uma complexidade O(N²) para a associação em memória, em vez do esperado O(N) com um mapa/dicionário. Isso é uma falha crítica na otimização da associação.\"\n    },\n    {\n      \"id\": \"contract_preservation\",\n      \"score\": 5,\n      \"weight\": 0.15,\n      \"evidence\": [\n        \"invoice.customer = customers.find(c => c.id === invoice.customer_id) || null;\",\n        \"return invoices;\"\n      ],\n      \"comment\": \"A função preserva o contrato de saída, retornando uma lista de faturas com a propriedade `customer` preenchida, e a assinatura pública não foi alterada.\"\n    }\n  ],\n  \"feedback\": \"A solução do aluno identificou corretamente a causa raiz do problema N+1 e implementou o batching de queries de forma eficaz, reduzindo as chamadas ao banco de dados para 2. No entanto, a associação em memória dos clientes às faturas foi feita com `customers.find()` dentro de um loop, o que leva a uma complexidade O(N²) em vez do O(N) esperado com o uso de um mapa/dicionário. Para melhorar, o aluno deveria ter construído um mapa de `customer_id` para `customer` e usado esse mapa para atribuir o cliente a cada fatura em O(1) por lookup.\"\n}",
+      "model": "google/gemini-2.5-flash",
+      "callIndex": 1,
+      "metadata": {
+        "engineStatus": "success",
+        "usage": {
+          "promptTokens": 2879,
+          "completionTokens": 741,
+          "totalTokens": 3620,
+          "reasoningTokens": 0,
+          "cachedTokens": 0,
+          "cacheWriteTokens": 0,
+          "costCredits": 0.0027162,
+          "upstreamInferenceCost": 0.0027162
+        }
+      }
+    },
+    {
+      "output": "{\n  \"overall\": 3.5,\n  \"criteria\": [\n    {\n      \"id\": \"root_cause\",\n      \"score\": 5,\n      \"weight\": 0.25,\n      \"evidence\": [\n        \"O problema do código original é que ele executa uma query de banco de dados dentro do loop, o que gera N queries adicionais para N faturas — somando N+1 ao total. Isso é lento porque cada query tem latência de rede e disco.\"\n      ],\n      \"comment\": \"O aluno identificou corretamente a causa raiz do problema N+1 e explicou o impacto na performance.\"\n    },\n    {\n      \"id\": \"batching_fix\",\n      \"score\": 5,\n      \"weight\": 0.35,\n      \"evidence\": [\n        \"const customerIds = invoices.map(i => i.customer_id);\",\n        \"const uniqueIds = [...new Set(customerIds)];\",\n        \"if (uniqueIds.length === 0) { return invoices; }\",\n        \"const placeholders = uniqueIds.map(() => '?').join(', ');\",\n        \"const customers = await db.query(`SELECT * FROM customers WHERE id IN (${placeholders})`, uniqueIds);\"\n      ],\n      \"comment\": \"O aluno implementou corretamente o batching, extraindo IDs únicos e usando uma única query com IN. O tratamento para lista vazia de IDs também está correto.\"\n    },\n    {\n      \"id\": \"memory_join\",\n      \"score\": 0,\n      \"weight\": 0.25,\n      \"evidence\": [\n        \"for (const invoice of invoices) { invoice.customer = customers.find(c => c.id === invoice.customer_id) || null; }\"\n      ],\n      \"comment\": \"A rubrica exige associação em memória com complexidade O(N) usando um dicionário/mapa. A implementação do aluno utiliza `customers.find()` dentro de um loop, o que resulta em uma complexidade O(N*M) no pior caso (onde M é o número de clientes retornados), ou O(N^2) se M for proporcional a N, e não O(N) conforme solicitado. A explicação no raciocínio também falha em justificar a complexidade O(N) para esta abordagem, afirmando incorretamente que o mapa garante O(N) quando na verdade o `find` não é um mapa.\"\n    },\n    {\n      \"id\": \"contract_preservation\",\n      \"score\": 5,\n      \"weight\": 0.15,\n      \"evidence\": [\n        \"invoice.customer = customers.find(c => c.id === invoice.customer_id) || null;\",\n        \"return invoices;\"\n      ],\n      \"comment\": \"A função preserva o contrato de saída, retornando uma lista de faturas com a propriedade `customer` preenchida, e a assinatura pública não foi alterada.\"\n    }\n  ],\n  \"feedback\": \"A solução do aluno identificou corretamente a causa raiz do problema N+1 e implementou o batching de queries de forma eficaz, reduzindo as chamadas ao banco de dados para 2. No entanto, a associação em memória dos clientes às faturas foi feita com `customers.find()` dentro de um loop, o que leva a uma complexidade O(N*M) ou O(N²) no pior caso, em vez do O(N) esperado com o uso de um mapa/dicionário. Para melhorar, o aluno deveria ter construído um mapa de `customer_id` para `customer` e usado esse mapa para atribuir o cliente a cada fatura em O(1) por lookup, garantindo a complexidade O(N) para a associação em memória. A explicação no raciocínio também precisa ser ajustada para refletir a complexidade real da solução implementada.\"\n}",
+      "model": "google/gemini-2.5-flash",
+      "callIndex": 2,
+      "metadata": {
+        "phase": "review",
+        "usage": {
+          "promptTokens": 2783,
+          "completionTokens": 862,
+          "totalTokens": 3645,
+          "reasoningTokens": 0,
+          "cachedTokens": 0,
+          "cacheWriteTokens": 0,
+          "costCredits": 0.0029899,
+          "upstreamInferenceCost": 0.0029899
+        }
+      }
+    }
+  ]
+}

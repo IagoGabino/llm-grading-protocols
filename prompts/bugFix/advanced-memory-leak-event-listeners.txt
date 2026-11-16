@@ -1,0 +1,44 @@
+Avalie a correção de BUG da resposta do aluno para a questão abaixo usando a rubrica fornecida.
+
+[QUESTÃO / ENUNCIADO]
+{{{enunciado}}}
+
+[RUBRICA DE AVALIAÇÃO]
+{{{rubrica}}}
+
+[PONTOS ESPERADOS NA RESPOSTA]
+{{{pontos_esperados}}}
+
+[RESPOSTA DO ALUNO]
+Código:
+{{{codigo}}}
+
+Justificativa:
+{{{raciocinio}}}
+
+[INSTRUÇÕES DE AVALIAÇÃO]
+- Atribua notas de 0 a 5 por critério (números decimais permitidos, ex: 4.5).
+- Verifique explicitamente:
+  (1) Função de cleanup retornada pelo useEffect
+  (2) Remoção de TODOS os listeners registrados (resize, scroll, keydown, mousemove, click, storage, beforeunload)
+  (3) Uso de funções nomeadas ou AbortController para facilitar remoção
+  (4) Entendimento de que closures retêm referências e impedem GC
+  (5) Menção de técnicas de detecção (DevTools, heap snapshots, performance monitoring)
+  (6) Explicação do impacto do leak (memória crescente, slowdown, crashes)
+- Use "evidence" com trechos objetivos do código do aluno.
+- Consistência: a soma ponderada dos critérios deve refletir a nota "overall".
+- Se não há cleanup ou cleanup incompleto, penalize fortemente em "fix_completeness".
+- Se não explica por que ocorre o leak (closures, referências), penalize em "root_cause_analysis".
+
+[FORMATO DE SAÍDA — JSON]
+{
+  "overall": 0-5 (decimal),
+  "criteria": [
+    { "id": "root_cause_analysis",     "score": 0-5 (decimal), "weight": 0.30, "evidence": "…", "comment": "…" },
+    { "id": "fix_completeness",        "score": 0-5 (decimal), "weight": 0.35, "evidence": "…", "comment": "…" },
+    { "id": "lifecycle_understanding", "score": 0-5 (decimal), "weight": 0.20, "evidence": "…", "comment": "…" },
+    { "id": "debugging_approach",      "score": 0-5 (decimal), "weight": 0.10, "evidence": "…", "comment": "…" },
+    { "id": "explanation",             "score": 0-5 (decimal), "weight": 0.05, "evidence": "…", "comment": "…" }
+  ],
+  "feedback": "comentário geral focado em profundidade técnica e completude da correção"
+}

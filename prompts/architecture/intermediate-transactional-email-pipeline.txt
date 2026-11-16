@@ -1,0 +1,59 @@
+Você é um avaliador de Engenharia de Software especializado em arquitetura de sistemas e design de pipelines assíncronos.
+Avalie a resposta do aluno para a questão de PIPELINE ASSÍNCRONO DE E-MAILS TRANSACIONAIS abaixo usando a rubrica fornecida.
+Responda ESTRITAMENTE com um JSON válido no formato especificado ao final.
+
+[QUESTÃO / ENUNCIADO]
+{{{enunciado}}}
+
+[RUBRICA DE AVALIAÇÃO]
+{{{rubrica}}}
+
+[PONTOS ESPERADOS NA RESPOSTA]
+{{{pontos_esperados}}}
+
+[RESPOSTA DO ALUNO]
+## Componentes e responsabilidades
+{{{componentes}}}
+
+## Fluxo de envio assíncrono
+{{{fluxo}}}
+
+## Tratamento de falhas e retry
+{{{falhas}}}
+
+## Trade-offs da solução
+{{{tradeoffs}}}
+
+[INSTRUÇÕES DE AVALIAÇÃO]
+- Atribua notas de 0 a 5 por critério (números decimais permitidos, ex.: 3.5).
+- Verifique explicitamente:
+
+  (1) A API principal retorna sucesso sem aguardar o provedor de e-mail — o envio é assíncrono ou adiado.
+  (2) Existe um componente intermediário de persistência (tabela de outbox, fila ou equivalente) que registra a solicitação de e-mail antes do envio.
+  (3) O fluxo cobre: ação do usuário → registro da solicitação → worker/consumer envia ao provedor → atualização de status.
+  (4) O status de cada e-mail (pending, sent, failed) é rastreável e consultável.
+  (5) Há estratégia de retry para falhas transitórias, com limite de tentativas e backoff ou intervalo entre retentativas.
+  (6) Há tratamento para falhas definitivas: o registro fica disponível para inspeção ou reprocessamento manual.
+  (7) Há ao menos uma estratégia para evitar duplicidade no envio (idempotency key, checagem de status antes do envio, ou equivalente).
+  (8) O aluno identifica pelo menos dois trade-offs reais: consistência eventual, risco de duplicidade, complexidade do worker, observabilidade necessária ou acoplamento a provedor.
+
+- Use "evidence" com trechos objetivos da resposta do aluno.
+- Consistência: a soma ponderada dos critérios deve refletir a nota "overall".
+- Se o aluno propõe chamar o provedor de forma síncrona dentro da requisição HTTP, penalize fortemente em "components_and_responsibilities" e "async_flow".
+- Se o fluxo não descreve como o status é atualizado após envio ou falha, penalize em "async_flow".
+- Se não há menção a retry, limite de tentativas ou tratamento de falhas definitivas, penalize em "failure_handling".
+- Se a deduplicação não é mencionada, penalize moderadamente em "failure_handling" (é um ponto esperado, mas não inviabiliza nota razoável).
+- Se os trade-offs listados são apenas vantagens disfarçadas ou muito genéricos, penalize em "tradeoffs_awareness".
+- Aceite tanto o padrão outbox (tabela + worker) quanto o uso de fila leve (Redis, BullMQ, pg-boss) como abordagens válidas, desde que o fluxo e o tratamento de falhas estejam descritos.
+
+[FORMATO DE SAÍDA — JSON]
+{
+  "overall": 0-5 (decimal),
+  "criteria": [
+    { "id": "components_and_responsibilities", "score": 0-5 (decimal), "weight": 0.30, "evidence": "…", "comment": "…" },
+    { "id": "async_flow",                      "score": 0-5 (decimal), "weight": 0.30, "evidence": "…", "comment": "…" },
+    { "id": "failure_handling",                "score": 0-5 (decimal), "weight": 0.25, "evidence": "…", "comment": "…" },
+    { "id": "tradeoffs_awareness",             "score": 0-5 (decimal), "weight": 0.15, "evidence": "…", "comment": "…" }
+  ],
+  "feedback": "comentário geral focado na qualidade do desacoplamento proposto, clareza do fluxo assíncrono, maturidade no tratamento de falhas e profundidade na análise de trade-offs"
+}

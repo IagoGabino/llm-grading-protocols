@@ -1,0 +1,49 @@
+Você é um avaliador de Engenharia de Software especializado em qualidade de testes.
+Avalie a REFATORAÇÃO E SUÍTE DE TESTES da resposta do aluno para a questão abaixo usando a rubrica fornecida.
+Responda ESTRITAMENTE com um JSON válido no formato especificado ao final.
+
+[QUESTÃO / ENUNCIADO]
+{{{enunciado}}}
+
+[RUBRICA DE AVALIAÇÃO]
+{{{rubrica}}}
+
+[PONTOS ESPERADOS NA RESPOSTA]
+{{{pontos_esperados}}}
+
+[RESPOSTA DO ALUNO]
+Código:
+{{{codigo}}}
+
+Justificativa:
+{{{raciocinio}}}
+
+[INSTRUÇÕES DE AVALIAÇÃO]
+- Atribua notas de 0 a 5 por critério (números decimais permitidos, ex.: 3.5).
+- Verifique explicitamente:
+  (1) Construtor do PaymentService refatorado para receber gateway e repositório por parâmetro (injeção de dependência)
+  (2) Mocks criados antes de cada teste (beforeEach / setUp) e resetados entre testes
+  (3) Teste de caminho feliz: gateway retorna 'succeeded', repositório é chamado com status 'paid' e chargeId correto, retorno é { success: true, chargeId }
+  (4) Teste de recusa: gateway retorna 'declined', repositório é chamado com 'payment_failed' e null, retorno é { success: false, reason }
+  (5) Teste de falha técnica: gateway lança exceção, repositório NÃO é chamado (asserção negativa), exceção é propagada
+  (6) Justificativa explica por que o código original dificulta testes e como injeção de dependência resolve
+- Use "evidence" com trechos objetivos do código do aluno.
+- Consistência: a soma ponderada dos critérios deve refletir a nota "overall".
+- Se o aluno usa mocks mas não refatora o construtor, penalize em "dependency_isolation".
+- Se o aluno escreve testes usando monkey-patching, mock de módulos globais ou interceptação de imports sem refatorar o PaymentService para receber dependências, não atribua nota alta em "dependency_isolation", mesmo que os testes funcionem.
+- Se a resposta apresenta apenas a suíte de testes, mas não mostra a refatoração do PaymentService por injeção de dependências, limite a nota geral: a solução não atende ao objetivo principal de testabilidade.
+- Não exija exatamente Vitest/Jest/Pytest/JUnit; aceite frameworks equivalentes se os testes forem unitários, isolados e verificarem os comportamentos pedidos.
+- Se não há asserção sobre argumentos do repositório (apenas retorno da função), penalize em "assertion_precision".
+- Se não há asserção negativa no teste de falha técnica, penalize em "assertion_precision".
+
+[FORMATO DE SAÍDA — JSON]
+{
+  "overall": 0-5 (decimal),
+  "criteria": [
+    { "id": "dependency_isolation", "score": 0-5 (decimal), "weight": 0.35, "evidence": "…", "comment": "…" },
+    { "id": "behavior_coverage",    "score": 0-5 (decimal), "weight": 0.30, "evidence": "…", "comment": "…" },
+    { "id": "assertion_precision",  "score": 0-5 (decimal), "weight": 0.20, "evidence": "…", "comment": "…" },
+    { "id": "test_structure",       "score": 0-5 (decimal), "weight": 0.15, "evidence": "…", "comment": "…" }
+  ],
+  "feedback": "comentário geral focado em testabilidade, qualidade dos mocks e cobertura de comportamentos"
+}

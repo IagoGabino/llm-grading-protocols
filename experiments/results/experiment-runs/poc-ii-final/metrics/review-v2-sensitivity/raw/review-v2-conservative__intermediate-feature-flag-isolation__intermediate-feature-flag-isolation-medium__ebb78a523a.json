@@ -1,0 +1,24 @@
+{
+  "runId": "review-v2-conservative__intermediate-feature-flag-isolation__intermediate-feature-flag-isolation-medium__ebb78a523a",
+  "rawOutputs": [
+    {
+      "output": "{\n  \"overall\": 4.88,\n  \"criteria\": [\n    {\n      \"id\": \"root_cause_diagnosis\",\n      \"score\": 5,\n      \"weight\": 0.3,\n      \"evidence\": [\n        \"O problema acontece porque o FeatureFlagManager guarda estado em memória e o Test A define NEW_UI como true sem limpar depois.\",\n        \"Quando Test B roda logo em seguida, encontra o valor que Test A deixou e falha.\"\n      ],\n      \"comment\": \"O aluno identificou corretamente que o problema é causado pelo vazamento de estado em memória do FeatureFlagManager, que é um Singleton, e como o Test A contamina o Test B.\"\n    },\n    {\n      \"id\": \"teardown_implementation\",\n      \"score\": 5,\n      \"weight\": 0.35,\n      \"evidence\": [\n        \"beforeEach(() => { featureFlags.reset(); });\"\n      ],\n      \"comment\": \"O aluno implementou corretamente o hook `beforeEach` do Jest para resetar o estado do `FeatureFlagManager` antes de cada teste, garantindo que cada teste comece com um estado limpo. A alternativa `beforeEach` é válida e tem o mesmo efeito prático de isolamento que `afterEach` neste cenário.\"\n    },\n    {\n      \"id\": \"determinism\",\n      \"score\": 4.5,\n      \"weight\": 0.25,\n      \"evidence\": [\n        \"Assim, todo teste começa com o estado limpo. O Test B agora sempre encontra NEW_UI como false, independentemente de qual teste rodou antes.\"\n      ],\n      \"comment\": \"A solução proposta garante o determinismo e a independência da ordem de execução, pois cada teste é executado com o `FeatureFlagManager` em seu estado inicial. A justificativa do aluno aborda a independência da ordem de execução, mas poderia ser um pouco mais explícita sobre como isso se aplica a qualquer ordem, não apenas 'qual teste rodou antes'.\"\n    },\n    {\n      \"id\": \"conceptual_justification\",\n      \"score\": 5,\n      \"weight\": 0.1,\n      \"evidence\": [\n        \"Essa abordagem é boa porque garante que cada teste começa do zero, evitando que um teste quebre outro.\"\n      ],\n      \"comment\": \"O aluno articulou o princípio de isolamento de testes, explicando que a solução garante que cada teste comece do zero e evita que um teste afete o outro, o que é a essência do isolamento.\"\n    }\n  ],\n  \"feedback\": \"Excelente trabalho na refatoração da suíte de testes! Você diagnosticou com precisão a causa raiz do problema como sendo o vazamento de estado devido ao `FeatureFlagManager` ser um Singleton e implementou a solução correta usando o hook `beforeEach` do Jest para garantir que cada teste comece com um estado limpo. Sua justificativa é clara e concisa, explicando por que o problema ocorre, como a solução funciona e o princípio de isolamento de testes que ela garante. A suíte refatorada agora é determinística e robusta contra a ordem de execução dos testes.\"\n}",
+      "model": "google/gemini-2.5-flash",
+      "callIndex": 1,
+      "metadata": {
+        "phase": "review_v2",
+        "promptVariant": "review-v2-conservative-audit",
+        "usage": {
+          "promptTokens": 2729,
+          "completionTokens": 704,
+          "totalTokens": 3433,
+          "reasoningTokens": 0,
+          "cachedTokens": 0,
+          "cacheWriteTokens": 0,
+          "costCredits": 0.0025787,
+          "upstreamInferenceCost": 0.0025787
+        }
+      }
+    }
+  ]
+}

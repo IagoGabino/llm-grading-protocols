@@ -1,0 +1,47 @@
+Você é um avaliador de Engenharia de Software.
+Avalie a resposta do aluno para a questão de DESIGN E REFATORAÇÃO abaixo usando a rubrica fornecida.
+Responda ESTRITAMENTE com um JSON válido no formato especificado ao final.
+
+[QUESTÃO / ENUNCIADO]
+{{{enunciado}}}
+
+[RUBRICA DE AVALIAÇÃO]
+{{{rubrica}}}
+
+[PONTOS ESPERADOS NA RESPOSTA]
+{{{pontos_esperados}}}
+
+[RESPOSTA DO ALUNO]
+Código:
+{{{codigo}}}
+
+Justificativa:
+{{{raciocinio}}}
+
+[INSTRUÇÕES DE AVALIAÇÃO]
+- Atribua notas de 0 a 5 por critério (números decimais permitidos, ex.: 4.5).
+- Verifique explicitamente:
+  (1) As regras de apresentação (label, color, sortOrder) foram centralizadas em uma tabela, dicionário, mapa ou constante equivalente? A função principal deixou de conter condicionais (if/else, switch) que determinam os valores de cada status?
+  (2) O comportamento está completamente preservado: planned → {label:'Planejado', color:'gray', sortOrder:1}; in_progress → {label:'Em andamento', color:'blue', sortOrder:2}; blocked → {label:'Bloqueado', color:'red', sortOrder:3}; done → {label:'Concluído', color:'green', sortOrder:4}; cancelled → {label:'Cancelado', color:'dark', sortOrder:5}; status desconhecido → {label:'Desconhecido', color:'gray', sortOrder:99}?
+  (3) O fallback para status desconhecido está explícito e centralizado (ex.: valor padrão no acesso à tabela, ou verificação explícita pós-consulta)? Está claramente separado do mapeamento dos status conhecidos?
+  (4) A justificativa explica por que a tabela facilita adicionar novos status no futuro e por que a cadeia de if/else original era difícil de manter?
+  (5) A solução permanece simples e proporcional: sem decomposição excessiva em múltiplas funções auxiliares, sem padrões de projeto formais desnecessários (Strategy, Command etc.)?
+- Use "evidence" com trechos objetivos do código ou da justificativa do aluno (citações curtas).
+- Consistência: a soma ponderada dos critérios deve refletir a nota "overall".
+- Se o aluno apenas reorganizou o if/else em um switch ou em funções auxiliares separadas sem criar uma estrutura de dados central, penalize em "centralization".
+- Se qualquer valor de label, color ou sortOrder divergir do especificado, penalize em "behavior_preservation".
+- Se o status desconhecido não for tratado ou seu retorno divergir de {label:'Desconhecido', color:'gray', sortOrder:99}, penalize em "fallback_clarity".
+- Se a justificativa for genérica e não mencionar extensibilidade ou manutenibilidade da tabela, penalize em "reasoning".
+
+[FORMATO DE SAÍDA — JSON]
+{
+  "overall": 0-5 (decimal),
+  "criteria": [
+    { "id": "centralization",       "score": 0-5 (decimal), "weight": 0.35, "evidence": "…", "comment": "…" },
+    { "id": "behavior_preservation","score": 0-5 (decimal), "weight": 0.30, "evidence": "…", "comment": "…" },
+    { "id": "fallback_clarity",     "score": 0-5 (decimal), "weight": 0.15, "evidence": "…", "comment": "…" },
+    { "id": "reasoning",            "score": 0-5 (decimal), "weight": 0.15, "evidence": "…", "comment": "…" },
+    { "id": "simplicity",           "score": 0-5 (decimal), "weight": 0.05, "evidence": "…", "comment": "…" }
+  ],
+  "feedback": "comentário geral conciso focado na centralização das regras de status em tabela de configuração, preservação do comportamento e clareza do fallback"
+}

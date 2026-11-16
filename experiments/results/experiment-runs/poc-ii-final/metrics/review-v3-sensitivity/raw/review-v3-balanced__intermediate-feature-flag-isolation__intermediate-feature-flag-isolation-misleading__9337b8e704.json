@@ -1,0 +1,24 @@
+{
+  "runId": "review-v3-balanced__intermediate-feature-flag-isolation__intermediate-feature-flag-isolation-misleading__9337b8e704",
+  "rawOutputs": [
+    {
+      "output": "{\n  \"overall\": 1.85,\n  \"criteria\": [\n    {\n      \"id\": \"root_cause_diagnosis\",\n      \"score\": 4,\n      \"weight\": 0.3,\n      \"evidence\": [\n        \"O problema é causado pelo estado compartilhado do FeatureFlagManager: como é um Singleton, a mesma instância é usada por todos os testes.\",\n        \"O Test A seta NEW_UI para true e não limpa o estado, então quando Test B roda em seguida, encontra o valor modificado por Test A.\"\n      ],\n      \"comment\": \"A avaliação inicial está correta. O aluno identificou explicitamente o vazamento de estado compartilhado (Singleton) e explicou como o Test A contamina o Test B.\"\n    },\n    {\n      \"id\": \"teardown_implementation\",\n      \"score\": 1,\n      \"weight\": 0.35,\n      \"evidence\": [\n        \"featureFlags.reset(); // limpa o estado ao final do teste\"\n      ],\n      \"comment\": \"A avaliação inicial está correta. A rubrica exige a introdução do hook de limpeza correto do framework (afterEach/beforeEach). A solução do aluno de chamar `reset()` diretamente dentro do `test` do Test A não atende a este requisito, pois não é um mecanismo de framework e não garante a limpeza para todos os testes de forma automática. A nota 1 reflete a ausência do uso do mecanismo adequado do framework.\"\n    },\n    {\n      \"id\": \"determinism\",\n      \"score\": 1.5,\n      \"weight\": 0.25,\n      \"evidence\": [\n        \"A solução é chamar featureFlags.reset() ao final do Test A, logo depois das assertions. Dessa forma, o estado fica limpo para o próximo teste. O Test B sempre encontrará NEW_UI como false porque o Test A faz a limpeza antes de terminar.\"\n      ],\n      \"comment\": \"A avaliação inicial está correta. Embora a solução do aluno resolva o problema para a sequência específica Test A -> Test B, ela não garante o determinismo e a independência da ordem de execução para a suíte de testes como um todo, conforme exigido pela rubrica. Se houvesse outros testes ou uma ordem diferente, o problema poderia ressurgir. A ausência de um hook de framework impede a garantia robusta de determinismo.\"\n    },\n    {\n      \"id\": \"conceptual_justification\",\n      \"score\": 3,\n      \"weight\": 0.1,\n      \"evidence\": [\n        \"Isso resolve o Flaky Test porque o estado do Singleton é explicitamente restaurado pelo teste que o modifica, seguindo o princípio de que cada teste deve deixar o ambiente como encontrou.\"\n      ],\n      \"comment\": \"A avaliação inicial está correta. O aluno menciona o princípio de que 'cada teste deve deixar o ambiente como encontrou', que é um aspecto do isolamento de testes. No entanto, a justificativa não aprofunda sobre a importância do isolamento ou como o hook (que não foi usado) o garantiria de forma mais eficaz.\"\n    }\n  ],\n  \"feedback\": \"Sua análise da causa raiz do Flaky Test foi muito boa, identificando corretamente o problema do estado compartilhado do Singleton. No entanto, a implementação da solução não utilizou o mecanismo de limpeza de estado do framework de testes (Jest, neste caso). A chamada `featureFlags.reset()` deve ser feita em um hook como `afterEach` (ou `beforeEach`), que garante que o estado seja limpo automaticamente após (ou antes) *cada* teste, independentemente de qual teste o modificou. Isso assegura que todos os testes comecem de um estado conhecido e limpo, tornando a suíte determinística e independente da ordem de execução. A forma como você implementou, exigiria que cada teste que modifica o estado se lembrasse de limpá-lo, o que é propenso a erros e não escala bem. Reforçar o uso de hooks de ciclo de vida é crucial para garantir o isolamento e a robustez dos testes.\"\n}",
+      "model": "google/gemini-2.5-flash",
+      "callIndex": 1,
+      "metadata": {
+        "phase": "review_v3_balanced",
+        "promptVariant": "review-v3-balanced-calibration",
+        "usage": {
+          "promptTokens": 3034,
+          "completionTokens": 903,
+          "totalTokens": 3937,
+          "reasoningTokens": 0,
+          "cachedTokens": 0,
+          "cacheWriteTokens": 0,
+          "costCredits": 0.0031677,
+          "upstreamInferenceCost": 0.0031677
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,43 @@
+Avalie a correção de BUG da resposta do aluno para a questão abaixo usando a rubrica fornecida.
+
+[QUESTÃO / ENUNCIADO]
+{{{enunciado}}}
+
+[RUBRICA DE AVALIAÇÃO]
+{{{rubrica}}}
+
+[PONTOS ESPERADOS NA RESPOSTA]
+{{{pontos_esperados}}}
+
+[RESPOSTA DO ALUNO]
+Código:
+{{{codigo}}}
+
+Justificativa:
+{{{raciocinio}}}
+
+[INSTRUÇÕES DE AVALIAÇÃO]
+- Atribua notas de 0 a 5 por critério (números decimais permitidos, ex.: 4.5).
+- Verifique explicitamente:
+  (1) Uso de âncoras ^...$ para validar string completa
+  (2) Parte local restringe caracteres permitidos (não usa .+ genérico)
+  (3) Exatamente um @ no padrão
+  (4) Domínio tem validação adequada (não aceita começar com ponto)
+  (5) Validação de TLD (pelo menos 2 caracteres alfabéticos após último ponto)
+  (6) Rejeita os casos inválidos: user@.com, user@@domain.com, user @domain.com, @domain.com, user@domain
+  (7) Aceita os casos válidos: user@domain.com, user.name@domain.br, user_123@sub.domain.co.uk
+- Use "evidence" com trechos do código (cite o regex usado).
+- Consistência: a soma ponderada dos critérios deve refletir a nota "overall".
+- Se o regex ainda aceita casos inválidos, penalize fortemente em "functional_fix".
+
+[FORMATO DE SAÍDA — JSON]
+{
+  "overall": 0-5 (decimal),
+  "criteria": [
+    { "id": "root_cause",      "score": 0-5 (decimal), "weight": 0.35, "evidence": "…", "comment": "…" },
+    { "id": "functional_fix",  "score": 0-5 (decimal), "weight": 0.40, "evidence": "…", "comment": "…" },
+    { "id": "edge_cases",      "score": 0-5 (decimal), "weight": 0.15, "evidence": "…", "comment": "…" },
+    { "id": "explanation",     "score": 0-5 (decimal), "weight": 0.10, "evidence": "…", "comment": "…" }
+  ],
+  "feedback": "comentário geral focado em correção funcional e completude da validação"
+}

@@ -1,0 +1,24 @@
+{
+  "runId": "review-v3-balanced__intermediate-csv-user-import-modularity__intermediate-csv-user-import-modularity-medium__62d42d7f17",
+  "rawOutputs": [
+    {
+      "output": "{\n  \"overall\": 3.6,\n  \"criteria\": [\n    {\n      \"id\": \"responsibility_identification\",\n      \"score\": 3,\n      \"weight\": 0.2,\n      \"evidence\": [\n        \"Extraí duas funções auxiliares: parseAndValidate, que limpa os campos e já verifica se nome e email estão presentes, retornando a lista de campos ausentes; e normalizeFields, que aplica lowercase no email, uppercase no plano com fallback 'FREE', e interpreta a idade como inteiro.\"\n      ],\n      \"comment\": \"O aluno identificou as responsabilidades de parsing, validação e normalização, mas as agrupou de forma não ideal na função `parseAndValidate`, misturando parsing e validação de obrigatoriedade. A nota inicial de 3 é adequada, pois houve identificação parcial, mas não a separação ideal.\"\n    },\n    {\n      \"id\": \"function_extraction\",\n      \"score\": 3,\n      \"weight\": 0.35,\n      \"evidence\": [\n        \"function parseAndValidate(row) { ... }\",\n        \"function normalizeFields(parsed) { ... }\"\n      ],\n      \"comment\": \"Foram extraídas duas funções. `normalizeFields` é coesa, mas `parseAndValidate` mistura parsing de campos brutos com a validação de obrigatoriedade, o que não é uma separação ideal de responsabilidades. O ideal seria ter uma função para parsing e outra para validação. A nota inicial de 3 reflete essa coesão parcial.\"\n    },\n    {\n      \"id\": \"behavior_preservation\",\n      \"score\": 5,\n      \"weight\": 0.25,\n      \"evidence\": [\n        \"const nome = (row.nome || '').trim();\",\n        \"const email = (row.email || '').trim();\",\n        \"if (!nome) missing.push('nome');\",\n        \"if (!email) missing.push('email');\",\n        \"email: parsed.email.toLowerCase(),\",\n        \"const plano = (parsed.rawPlano || '').trim().toUpperCase() || 'FREE';\",\n        \"idade: isNaN(idade) ? 0 : idade;\",\n        \"errors.push({ line: lineNumber, missingFields: parsed.missing });\"\n      ],\n      \"comment\": \"O comportamento original foi totalmente preservado. Todas as regras de normalização (lowercase, uppercase, fallback 'FREE', idade numérica com fallback 0) e a acumulação de erros estão corretas. A nota 5 está bem justificada.\"\n    },\n    {\n      \"id\": \"coupling_reduction\",\n      \"score\": 4,\n      \"weight\": 0.1,\n      \"evidence\": [\n        \"function parseAndValidate(row)\",\n        \"function normalizeFields(parsed)\"\n      ],\n      \"comment\": \"As funções extraídas recebem os dados necessários por parâmetro e retornam valores, sem modificar estado externo. Há um acoplamento entre `parseAndValidate` e `normalizeFields` através do objeto `parsed`, o que é aceitável. A mistura de responsabilidades em `parseAndValidate` não aumenta o acoplamento externo, mas sim a complexidade interna da função. A nota 4 é apropriada, pois não há efeitos colaterais ou dependências externas não declaradas.\"\n    },\n    {\n      \"id\": \"reasoning\",\n      \"score\": 3,\n      \"weight\": 0.1,\n      \"evidence\": [\n        \"Essa separação melhora a legibilidade e torna normalizeFields diretamente testável com objetos já validados.\"\n      ],\n      \"comment\": \"A justificativa explica as responsabilidades separadas e menciona melhoria na legibilidade e testabilidade de `normalizeFields`. Contudo, não aprofunda sobre a coesão de `parseAndValidate` ou como a separação melhora a testabilidade de forma mais ampla, especialmente considerando a mistura de parsing e validação. A nota 3 é consistente com a profundidade da justificativa.\"\n    }\n  ],\n  \"feedback\": \"A refatoração do aluno demonstrou um bom entendimento da necessidade de modularização, preservando integralmente o comportamento original. A função `normalizeFields` é um excelente exemplo de coesão. No entanto, a função `parseAndValidate` poderia ser aprimorada para separar ainda mais as responsabilidades de parsing e validação de obrigatoriedade, o que aumentaria a coesão e a testabilidade de cada unidade. A justificativa poderia explorar mais os benefícios da separação de responsabilidades para além da legibilidade.\"\n}",
+      "model": "google/gemini-2.5-flash",
+      "callIndex": 1,
+      "metadata": {
+        "phase": "review_v3_balanced",
+        "promptVariant": "review-v3-balanced-calibration",
+        "usage": {
+          "promptTokens": 3302,
+          "completionTokens": 1015,
+          "totalTokens": 4317,
+          "reasoningTokens": 0,
+          "cachedTokens": 0,
+          "cacheWriteTokens": 0,
+          "costCredits": 0.0035281,
+          "upstreamInferenceCost": 0.0035281
+        }
+      }
+    }
+  ]
+}

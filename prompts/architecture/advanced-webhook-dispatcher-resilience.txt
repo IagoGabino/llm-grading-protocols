@@ -1,0 +1,58 @@
+Você é um avaliador de Engenharia de Software especializado em arquitetura de sistemas distribuídos, mensageria e padrões de resiliência.
+Avalie a resposta do aluno para a questão de RESILIÊNCIA EM DESPACHANTE DE WEBHOOKS MULTI-TENANT abaixo usando a rubrica fornecida.
+Responda ESTRITAMENTE com um JSON válido no formato especificado ao final.
+
+[QUESTÃO / ENUNCIADO]
+{{{enunciado}}}
+
+[RUBRICA DE AVALIAÇÃO]
+{{{rubrica}}}
+
+[PONTOS ESPERADOS NA RESPOSTA]
+{{{pontos_esperados}}}
+
+[RESPOSTA DO ALUNO]
+## Estratégia de Isolamento de Filas
+{{{isolamento_filas}}}
+
+## Resiliência nos Workers (Timeouts e Circuit Breaker)
+{{{resiliencia_workers}}}
+
+## Políticas de Retry e Dead Letter Queue (DLQ)
+{{{retry_dlq}}}
+
+[INSTRUÇÕES DE AVALIAÇÃO]
+- Atribua notas de 0 a 5 por critério (números decimais permitidos, ex.: 4.5).
+- Verifique explicitamente:
+
+  (1) O aluno identifica corretamente o problema do Noisy Neighbor como esgotamento de recursos compartilhados (resource exhaustion), não apenas como "fila lenta".
+  (2) A solução de isolamento proposta é viável em produção: filas por tenant, shuffle sharding, fast/slow lane ou combinação. Soluções que apenas sugerem "aumentar o timeout" ou "adicionar mais workers" sem isolar o tráfego devem ser penalizadas.
+  (3) O aluno reconhece ao menos um trade-off real da estratégia de isolamento escolhida (custo de N filas, colisões residuais em sharding, complexidade de roteamento dinâmico).
+  (4) O timeout HTTP é mencionado com valores ou critérios de dimensionamento — não apenas "timeouts agressivos" sem contexto.
+  (5) O Circuit Breaker é descrito com os três estados (closed/open/half-open) ou equivalente funcional; o aluno define quando o circuito abre (critério de falha) e quando fecha (critério de recuperação).
+  (6) O aluno menciona como o estado do Circuit Breaker é compartilhado entre workers stateless (ex.: Redis, estado local por pool dedicado ao tenant).
+  (7) O algoritmo de retry usa backoff (preferencialmente exponencial) com menção a jitter ou mecanismo equivalente para evitar thundering herd nos endpoints dos tenants.
+  (8) Eventos em retry não voltam para a fila principal de alta prioridade — o aluno deve indicar fila separada (slow lane, fila de retry, ou equivalente).
+  (9) A DLQ é descrita com propósito claro: auditoria, diagnóstico e/ou reprocessamento manual — não apenas como "fila de descarte".
+
+- Use "evidence" com trechos objetivos da resposta do aluno.
+- Consistência: a soma ponderada dos critérios deve refletir a nota "overall".
+- Penalize fortemente em "isolamento" se o aluno não propuser mecanismo que efetivamente isole tráfego por tenant (fila única com prioridade não é suficiente).
+- Penalize em "circuit_breaker" se o aluno descrever apenas timeout sem o padrão Circuit Breaker, ou descrever o Circuit Breaker sem definir os critérios de abertura/fechamento.
+- Penalize em "retry_e_dlq" se o aluno recomendar que retries voltem à fila principal sem justificativa de por que isso não causa starvation dos eventos saudáveis.
+- Não penalize o aluno por escolher uma abordagem de isolamento diferente da esperada (ex.: fast/slow lane vs. filas por tenant), desde que a abordagem seja tecnicamente fundamentada e os trade-offs sejam reconhecidos.
+- Penalize respostas que apenas citam padrões arquiteturais de forma genérica, sem explicar como eles se conectam ao problema descrito. Mencionar "Circuit Breaker", "DLQ", "backoff" ou "shuffle sharding" sem critérios, fluxo ou impacto operacional não deve receber nota alta.
+- Para receber nota alta, a resposta deve explicar o fluxo do evento: entrada na fila, roteamento por tenant/lane/shard, decisão do worker, comportamento quando o circuito está aberto, destino dos retries e destino final após esgotar tentativas.
+- Não exija uma única arquitetura específica. Aceite combinações diferentes desde que resolvam explicitamente RF1–RF4 e respeitem as restrições de workers stateless e estado compartilhado externalizado.
+
+[FORMATO DE SAÍDA — JSON]
+{
+  "overall": 0-5 (decimal),
+  "criteria": [
+    { "id": "isolamento",      "score": 0-5 (decimal), "weight": 0.35, "evidence": "…", "comment": "…" },
+    { "id": "circuit_breaker", "score": 0-5 (decimal), "weight": 0.35, "evidence": "…", "comment": "…" },
+    { "id": "retry_e_dlq",    "score": 0-5 (decimal), "weight": 0.20, "evidence": "…", "comment": "…" },
+    { "id": "tradeoffs",      "score": 0-5 (decimal), "weight": 0.10, "evidence": "…", "comment": "…" }
+  ],
+  "feedback": "comentário geral focado na qualidade do mecanismo de isolamento proposto, na corretude do Circuit Breaker e na robustez da política de retry para não contaminar o tráfego saudável"
+}

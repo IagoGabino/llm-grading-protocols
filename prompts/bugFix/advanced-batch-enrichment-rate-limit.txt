@@ -1,0 +1,51 @@
+Avalie a correção de BUG da resposta do aluno para a questão abaixo usando a rubrica fornecida.
+
+[QUESTÃO / ENUNCIADO]
+{{{enunciado}}}
+
+[RUBRICA DE AVALIAÇÃO]
+{{{rubrica}}}
+
+[PONTOS ESPERADOS NA RESPOSTA]
+{{{pontos_esperados}}}
+
+[RESPOSTA DO ALUNO]
+Código:
+{{{codigo}}}
+
+Justificativa:
+{{{raciocinio}}}
+
+[INSTRUÇÕES DE AVALIAÇÃO]
+- Atribua notas de 0 a 5 por critério (números decimais permitidos, ex.: 3.5).
+- Verifique explicitamente:
+  (1) O aluno identifica as DUAS causas raiz combinadas: (a) chamadas sequenciais que tornam o processamento lento para lotes grandes e (b) ausência de verificação de status HTTP / tratamento de HTTP 429, causando perda de todos os resultados parciais ao primeiro erro.
+  (2) A solução implementa concorrência limitada de forma explícita — semáforo, pool com tamanho máximo ou processamento em sublotes de tamanho fixo — e não dispara todas as requisições em paralelo sem restrição nem mantém o loop puramente sequencial sem ganho de throughput.
+  (3) A solução trata HTTP 429 explicitamente: detecta o status, aplica pelo menos uma tentativa de retry com alguma forma de espera (backoff fixo mínimo aceitável) e, ao esgotar retries, registra o item em errors sem abortar o lote.
+  (4) Cada chamada individual está protegida por tratamento de erro (try/catch ou equivalente): erros por item vão para errors e não interrompem o processamento dos demais itens.
+  (5) O contrato de saída é preservado: a função retorna { enriched: [...], errors: [...] } em caso de sucesso parcial e lança exceção apenas para entrada inválida (lista nula ou vazia).
+  (6) O aluno discute ao menos dois trade-offs reais — por exemplo: grau de paralelismo vs. pressão na API, latência total do lote, risco de retry agressivo, estratégia de preservação de ordem.
+- Penalize fortemente em "concurrency_control" se:
+  — a solução usa Promise.all / asyncio.gather / CompletableFuture sem nenhum mecanismo de limitação sobre a lista completa;
+  — a solução mantém o loop sequencial sem redução de latência para lotes grandes;
+  — o MAX_CONCURRENT configurado é ignorado ou contornado de fato.
+- Penalize fortemente em "partial_failure" se:
+  — a solução lança exceção ou interrompe o lote ao primeiro erro por item sem justificativa explícita;
+  — HTTP 429 não é tratado como caso especial (é tratado igual a qualquer outro erro ou propagado sem retry).
+- Penalize em "contract_preservation" se a função lança exceção para erros parciais em vez de acumulá-los em errors.
+- Não penalize soluções que não preservam ordem em enriched, desde que o aluno documente essa decisão explicitamente.
+- Use "evidence" com trechos objetivos do código ou da justificativa do aluno (cite mecanismos de controle de concorrência, tratamento de 429, estrutura de try/catch).
+- Consistência: a soma ponderada dos critérios deve refletir a nota "overall".
+
+[FORMATO DE SAÍDA — JSON]
+{
+  "overall": 0-5 (decimal),
+  "criteria": [
+    { "id": "root_cause",          "score": 0-5 (decimal), "weight": 0.25, "evidence": "...", "comment": "..." },
+    { "id": "concurrency_control", "score": 0-5 (decimal), "weight": 0.30, "evidence": "...", "comment": "..." },
+    { "id": "partial_failure",     "score": 0-5 (decimal), "weight": 0.25, "evidence": "...", "comment": "..." },
+    { "id": "contract_preservation","score": 0-5 (decimal), "weight": 0.10, "evidence": "...", "comment": "..." },
+    { "id": "tradeoff_explanation", "score": 0-5 (decimal), "weight": 0.10, "evidence": "...", "comment": "..." }
+  ],
+  "feedback": "comentário geral conciso focado na profundidade do diagnóstico de integração/performance, na adequação do controle de concorrência, no tratamento de HTTP 429 e falhas parciais, e na preservação do contrato de saída"
+}

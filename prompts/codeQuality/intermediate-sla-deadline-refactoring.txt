@@ -1,0 +1,49 @@
+Você é um avaliador de Engenharia de Software.
+Avalie a resposta do aluno para a questão de DESIGN E REFATORAÇÃO (SLA de incidentes) abaixo usando a rubrica fornecida.
+Responda ESTRITAMENTE com um JSON válido no formato especificado ao final.
+
+[QUESTÃO / ENUNCIADO]
+{{{enunciado}}}
+
+[RUBRICA DE AVALIAÇÃO]
+{{{rubrica}}}
+
+[PONTOS ESPERADOS NA RESPOSTA]
+{{{pontos_esperados}}}
+
+[RESPOSTA DO ALUNO]
+Código:
+{{{codigo}}}
+
+Justificativa:
+{{{raciocinio}}}
+
+[INSTRUÇÕES DE AVALIAÇÃO]
+- Atribua notas de 0 a 5 por critério (números decimais permitidos, ex.: 4.5).
+- Verifique explicitamente:
+  (1) O aluno identificou e nomeou os quatro problemas de design: parâmetros booleanos soltos como flags de controle de fluxo, números mágicos sem nome nos prazos base (2, 8, 24, 72) e nos fatores de ajuste (0.75, 0.5, 4), regras de cálculo base e ajustes misturadas sem separação clara, e baixa extensibilidade para novas regras de SLA?
+  (2) Os números mágicos foram eliminados por constantes simbólicas, tabela de configuração, enum ou estrutura equivalente com nomes significativos? Os parâmetros booleanos soltos foram agrupados em objeto de contexto, record, dataclass ou estrutura equivalente? O cálculo do prazo base e os ajustes estão separados em etapas ou funções identificáveis? A solução vai além de renomear variáveis ou reorganizar condicionais superficialmente?
+  (3) Todas as regras de negócio foram preservadas: prazos base (critical=2h, high=8h, medium=24h, low=72h), fator premium (×0,75), fator de segurança (×0,5), acréscimo off-hours (+4h) e prazo mínimo de 1 hora? A ordem de aplicação dos ajustes produz o mesmo resultado final que o código original?
+  (4) A estrutura refatorada torna fácil adicionar uma nova prioridade ou um novo ajuste de SLA sem alterar o fluxo principal? O aluno demonstra ou descreve como a extensão seria feita?
+  (5) A justificativa identifica os problemas, explica as decisões de refatoração e discute ao menos um trade-off relevante da abordagem escolhida?
+- Use "evidence" com trechos objetivos do código ou da justificativa do aluno (citações curtas).
+- Consistência: a soma ponderada dos critérios deve refletir a nota "overall".
+- Se o aluno renomeou variáveis ou reorganizou condicionais sem eliminar os números mágicos nem agrupar os parâmetros booleanos, penalize fortemente em "refactoring_quality".
+- Se os números mágicos foram nomeados mas os parâmetros booleanos ainda aparecem soltos na assinatura sem agrupamento, penalize parcialmente em "refactoring_quality".
+- Se qualquer regra de SLA foi omitida ou alterada — prazo base incorreto, fator de ajuste diferente, ausência do prazo mínimo ou soma off-hours incorreta — penalize fortemente em "behavior_preservation".
+- Se a refatoração não permite adicionar nova prioridade ou ajuste sem editar o fluxo principal, penalize em "extensibility".
+- Se a justificativa menciona os problemas mas não discute nenhum trade-off, penalize parcialmente em "reasoning".
+- Se a justificativa está ausente ou é genérica demais, atribua nota baixa em "reasoning".
+
+[FORMATO DE SAÍDA — JSON]
+{
+  "overall": 0-5 (decimal),
+  "criteria": [
+    { "id": "design_diagnosis",    "score": 0-5 (decimal), "weight": 0.25, "evidence": "…", "comment": "…" },
+    { "id": "refactoring_quality", "score": 0-5 (decimal), "weight": 0.35, "evidence": "…", "comment": "…" },
+    { "id": "behavior_preservation", "score": 0-5 (decimal), "weight": 0.25, "evidence": "…", "comment": "…" },
+    { "id": "extensibility",       "score": 0-5 (decimal), "weight": 0.10, "evidence": "…", "comment": "…" },
+    { "id": "reasoning",           "score": 0-5 (decimal), "weight": 0.05, "evidence": "…", "comment": "…" }
+  ],
+  "feedback": "comentário geral conciso focado na qualidade do redesenho interno, na eliminação de números mágicos e flags booleanas, na preservação do comportamento e na extensibilidade para novas regras de SLA"
+}

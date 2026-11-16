@@ -1,0 +1,45 @@
+Avalie os TESTES da resposta do aluno para a questão abaixo.
+
+[QUESTÃO / ENUNCIADO]
+{{{enunciado}}}
+
+[RUBRICA DE AVALIAÇÃO]
+{{{rubrica}}}
+
+[PONTOS ESPERADOS NA RESPOSTA]
+{{{pontos_esperados}}}
+
+[RESPOSTA DO ALUNO]
+Código:
+{{{codigo}}}
+
+Justificativa:
+{{{raciocinio}}}
+
+[INSTRUÇÕES DE AVALIAÇÃO]
+- Atribua notas de 0 a 5 por critério (números decimais permitidos, ex.: 4.0).
+- Verifique explicitamente:
+  (1) Pelo menos 6 testes implementados
+  (2) Teste de caso de sucesso com múltiplos items e cálculo de total
+  (3) Testes de validação (customerId, items vazio, quantity inválida)
+  (4) Teste de produto fora de estoque (mock retornando false)
+  (5) Uso adequado de mocks para orderRepository e inventoryService
+  (6) Verificações de chamadas a mocks (toHaveBeenCalledWith, toHaveBeenCalledTimes)
+  (7) Asserções de status code e estrutura de resposta
+  (8) Organização com describe/it e nomes descritivos
+- Use "evidence" com trechos objetivos do código de testes do aluno.
+- Consistência: a soma ponderada dos critérios deve refletir a nota "overall".
+- Se faltam mocks ou asserções estão incompletas, penalize em "mocking_strategy" e "assertions_quality".
+
+[FORMATO DE SAÍDA — JSON]
+{
+  "overall": 0-5 (decimal),
+  "criteria": [
+    { "id": "coverage_scenarios",  "score": 0-5 (decimal), "weight": 0.35, "evidence": "…", "comment": "…" },
+    { "id": "mocking_strategy",    "score": 0-5 (decimal), "weight": 0.25, "evidence": "…", "comment": "…" },
+    { "id": "assertions_quality",  "score": 0-5 (decimal), "weight": 0.20, "evidence": "…", "comment": "…" },
+    { "id": "test_organization",   "score": 0-5 (decimal), "weight": 0.10, "evidence": "…", "comment": "…" },
+    { "id": "edge_cases",          "score": 0-5 (decimal), "weight": 0.10, "evidence": "…", "comment": "…" }
+  ],
+  "feedback": "comentário geral focado em cobertura e qualidade técnica dos testes"
+}

@@ -1,0 +1,58 @@
+Você é um avaliador de Engenharia de Software especializado em arquitetura de sistemas e comunicação em tempo real.
+Avalie a resposta do aluno para a questão de ESTRATÉGIA DE NOTIFICAÇÕES EM TEMPO REAL abaixo usando a rubrica fornecida.
+Responda ESTRITAMENTE com um JSON válido no formato especificado ao final.
+
+[QUESTÃO / ENUNCIADO]
+{{{enunciado}}}
+
+[RUBRICA DE AVALIAÇÃO]
+{{{rubrica}}}
+
+[PONTOS ESPERADOS NA RESPOSTA]
+{{{pontos_esperados}}}
+
+[RESPOSTA DO ALUNO]
+## Alternativas consideradas
+{{{alternativas}}}
+
+## Decisão e justificativa
+{{{decisao}}}
+
+## Trade-offs e limitações
+{{{tradeoffs}}}
+
+## Tolerância a falhas e usuários offline
+{{{falhas}}}
+
+[INSTRUÇÕES DE AVALIAÇÃO]
+- Atribua notas de 0 a 5 por critério (números decimais permitidos, ex.: 3.5).
+- Verifique explicitamente:
+
+  (1) Menciona e compara pelo menos três das quatro abordagens candidatas (polling, SSE, WebSocket, híbrida)
+  (2) Aponta diferenças técnicas relevantes: direção do canal, overhead de protocolo, reconexão nativa, compatibilidade com proxies
+  (3) Escolhe uma abordagem clara — inclusive híbrida se bem delimitada; não aceita "depende" sem critérios claros
+  (4) Justifica a decisão com referência explícita aos RFs (notificações de eventos, offline) e NFRs (latência, escalabilidade, simplicidade)
+  (5) Identifica limitações concretas da solução escolhida (ex.: SSE é unidirecional; WebSocket exige infra stateful; polling gera carga inútil)
+  (6) Reconhece o que foi sacrificado ao descartar alternativas (trade-off genuíno, não apenas lista de desvantagens)
+  (7) Descreve mecanismo de reconexão automática (ex.: EventSource backoff, Last-Event-ID)
+  (8) Propõe estratégia para entrega de eventos a usuários offline (event store, timestamp de sincronização ou equivalente)
+
+- Use "evidence" com trechos objetivos da resposta do aluno.
+- Consistência: a soma ponderada dos critérios deve refletir a nota "overall".
+- Se o aluno escolheu WebSocket sem reconhecer que o canal bidirecional é desnecessário para o escopo, não penalize — a decisão pode ser válida se bem justificada com os requisitos.
+- Se o aluno escolheu SSE ou uma abordagem híbrida, avalie a qualidade da justificativa e dos trade-offs; não trate WebSocket como resposta obrigatória.
+- Se o aluno propõe apenas polling sem considerar as alternativas push, penalize fortemente em "alternatives_comparison".
+- Se a justificativa da decisão não menciona nenhum RF ou NFR do enunciado, penalize em "decision_justification".
+- Se não há estratégia alguma para usuários offline ou reconexão, zere "resilience_strategy".
+
+[FORMATO DE SAÍDA — JSON]
+{
+  "overall": 0-5 (decimal),
+  "criteria": [
+    { "id": "alternatives_comparison",  "score": 0-5 (decimal), "weight": 0.30, "evidence": "…", "comment": "…" },
+    { "id": "decision_justification",   "score": 0-5 (decimal), "weight": 0.30, "evidence": "…", "comment": "…" },
+    { "id": "tradeoffs_awareness",      "score": 0-5 (decimal), "weight": 0.25, "evidence": "…", "comment": "…" },
+    { "id": "resilience_strategy",      "score": 0-5 (decimal), "weight": 0.15, "evidence": "…", "comment": "…" }
+  ],
+  "feedback": "comentário geral focado na qualidade da decisão arquitetural, profundidade da comparação entre alternativas e maturidade no tratamento de trade-offs e resiliência"
+}

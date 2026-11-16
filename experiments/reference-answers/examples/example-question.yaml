@@ -1,0 +1,145 @@
+questionSlug: easy-refactor-shipping
+
+answers:
+  - id: easy-refactor-shipping-strong-example
+    profile: strong
+    variant: complete_correct
+    language: javascript
+    code: |
+      const SHIPPING_RULES = {
+        US: { rate: 5, base: 10 },
+        BR: { rate: 8, base: 20 },
+        DE: { rate: 6, base: 12 },
+        DEFAULT: { rate: 10, base: 25 },
+      };
+
+      const EXPRESS_FEE = 30;
+
+      export function calculateShipping(order) {
+        if (!order) {
+          throw new Error("order e obrigatorio");
+        }
+
+        const country = order.address?.country ?? "DEFAULT";
+        const rule = SHIPPING_RULES[country] ?? SHIPPING_RULES.DEFAULT;
+        const base = order.weight * rule.rate + rule.base;
+
+        return order.express ? base + EXPRESS_FEE : base;
+      }
+    justification: |
+      Exemplo demonstrativo. A resposta substitui condicionais por uma tabela de regras,
+      centraliza a taxa expressa e preserva os valores descritos no enunciado.
+    expectedOverall: 4.9
+    expectedCriteria:
+      - criterionId: problems
+        expectedScore: 5
+        rationale: |
+          Identifica a duplicacao, condicionais encadeadas e numeros magicos como problemas centrais.
+      - criterionId: refactor_quality
+        expectedScore: 5
+        rationale: |
+          Usa tabela de consulta e constantes, facilitando a inclusao de novos paises.
+      - criterionId: behavior_preservation
+        expectedScore: 5
+        rationale: |
+          Mantem as tarifas, bases, fallback e acrescimo express do comportamento original.
+      - criterionId: code_clarity
+        expectedScore: 4.5
+        rationale: |
+          O codigo fica direto e legivel, com nomes claros para regras e taxa expressa.
+      - criterionId: reasoning
+        expectedScore: 4.5
+        rationale: |
+          A justificativa explica as escolhas e conecta a refatoracao com manutencao.
+    notes: |
+      Arquivo apenas demonstrativo; nao faz parte do dataset final.
+
+  - id: easy-refactor-shipping-medium-example
+    profile: medium
+    variant: partial_correct
+    language: javascript
+    answerText: |
+      Exemplo demonstrativo. A resposta identifica que ha duplicacao na taxa expressa,
+      mas nao elimina completamente os condicionais nem torna as regras faceis de estender.
+    code: |
+      export function calculateShipping(order) {
+        const country = order.address.country;
+        const express = order.express ? 30 : 0;
+
+        if (country === "US") return order.weight * 5 + 10 + express;
+        if (country === "BR") return order.weight * 8 + 20 + express;
+        if (country === "DE") return order.weight * 6 + 12 + express;
+
+        return order.weight * 10 + 25 + express;
+      }
+    justification: |
+      Exemplo demonstrativo. A resposta remove parte da duplicacao da taxa expressa,
+      mas ainda mantem condicionais e numeros magicos espalhados.
+    expectedOverall: 3.3
+    expectedCriteria:
+      - criterionId: problems
+        expectedScore: 4
+        rationale: |
+          Reconhece a duplicacao da taxa expressa, mas nao trata completamente os outros smells.
+      - criterionId: refactor_quality
+        expectedScore: 3
+        rationale: |
+          Melhora parcialmente a repeticao, mas nao torna as regras realmente extensives.
+      - criterionId: behavior_preservation
+        expectedScore: 3
+        rationale: |
+          Preserva os casos principais, embora nao discuta entradas ausentes ou invalidas.
+      - criterionId: code_clarity
+        expectedScore: 3
+        rationale: |
+          O fluxo fica menor, mas ainda depende de condicionais e literais numericos.
+      - criterionId: reasoning
+        expectedScore: 3
+        rationale: |
+          A justificativa e coerente, porem superficial sobre trade-offs.
+    notes: |
+      Arquivo apenas demonstrativo; nao faz parte do dataset final.
+
+  - id: easy-refactor-shipping-weak-example
+    profile: weak
+    variant: subtle_error
+    language: javascript
+    code: |
+      export function calculateShipping(order) {
+        const rates = { US: 5, BR: 8, DE: 6 };
+        const rate = rates[order.address.country] ?? 10;
+        let total = order.weight * rate;
+
+        if (order.express) {
+          total = total * 1.3;
+        }
+
+        return total;
+      }
+    justification: |
+      Exemplo demonstrativo. A resposta parece simplificar a funcao, mas remove as taxas base
+      e altera a regra de entrega expressa.
+    expectedOverall: 1.5
+    expectedCriteria:
+      - criterionId: problems
+        expectedScore: 1.5
+        rationale: |
+          Percebe que ha condicionais, mas nao identifica todos os problemas relevantes.
+      - criterionId: refactor_quality
+        expectedScore: 1
+        rationale: |
+          A tabela e incompleta e a regra expressa foi alterada de forma incorreta.
+      - criterionId: behavior_preservation
+        expectedScore: 2
+        rationale: |
+          Mantem parte das tarifas por kg, mas remove taxas base e muda a taxa expressa.
+      - criterionId: code_clarity
+        expectedScore: 2
+        rationale: |
+          O codigo e curto, mas a clareza vem com perda de comportamento essencial.
+      - criterionId: reasoning
+        expectedScore: 1
+        rationale: |
+          A justificativa nao demonstra preservacao de comportamento nem discute os trade-offs.
+    notes: |
+      Arquivo apenas demonstrativo; nao faz parte do dataset final.

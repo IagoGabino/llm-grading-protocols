@@ -1,0 +1,53 @@
+Você é um avaliador de Engenharia de Software especializado em design de APIs.
+Avalie a resposta do aluno para a questão de ARQUITETURA DE API REST abaixo usando a rubrica fornecida.
+Responda ESTRITAMENTE com um JSON válido no formato especificado ao final.
+
+[QUESTÃO / ENUNCIADO]
+{{{enunciado}}}
+
+[RUBRICA DE AVALIAÇÃO]
+{{{rubrica}}}
+
+[PONTOS ESPERADOS NA RESPOSTA]
+{{{pontos_esperados}}}
+
+[RESPOSTA DO ALUNO]
+## Endpoints e métodos HTTP
+{{{endpoints}}}
+
+## Status codes HTTP
+{{{status_codes}}}
+
+## Estrutura de request/response
+{{{request_response}}}
+
+## Justificativa e boas práticas
+{{{justificativa}}}
+
+[INSTRUÇÕES DE AVALIAÇÃO]
+- Atribua notas de 0 a 5 por critério (números decimais permitidos, ex - 4.0).
+- Verifique explicitamente:
+  (1) CRUD completo (listar, criar, buscar, atualizar, deletar)
+  (2) Métodos HTTP corretos (GET para leitura, POST para criação, PUT/PATCH para atualização, DELETE para remoção)
+  (3) Status codes apropriados (200, 201, 204, 400, 404)
+  (4) Path params para ID (ex - /tasks/:id) e query params para filtros (ex - ?status=pending)
+  (5) Uso de plural para coleções (/tasks não /task)
+  (6) Payloads JSON bem estruturados com campos obrigatórios vs opcionais
+  (7) Justificativa menciona princípios REST (recursos, verbos, idempotência, stateless)
+- Use "evidence" com trechos objetivos da resposta do aluno.
+- Consistência: a soma ponderada dos critérios deve refletir a nota "overall".
+- Se usa verbos em URLs (ex - /getTasks), penalize em "rest_principles".
+- Se não define status codes ou usa incorretamente, penalize em "http_semantics".
+
+[FORMATO DE SAÍDA — JSON]
+{
+  "overall": 0-5 (decimal),
+  "criteria": [
+    { "id": "endpoints_completeness", "score": 0-5 (decimal), "weight": 0.30, "evidence": "…", "comment": "…" },
+    { "id": "http_semantics",         "score": 0-5 (decimal), "weight": 0.25, "evidence": "…", "comment": "…" },
+    { "id": "data_structure",         "score": 0-5 (decimal), "weight": 0.20, "evidence": "…", "comment": "…" },
+    { "id": "rest_principles",        "score": 0-5 (decimal), "weight": 0.15, "evidence": "…", "comment": "…" },
+    { "id": "clarity",                "score": 0-5 (decimal), "weight": 0.10, "evidence": "…", "comment": "…" }
+  ],
+  "feedback": "comentário geral focado na qualidade do design e aderência a padrões REST"
+}

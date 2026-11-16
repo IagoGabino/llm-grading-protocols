@@ -1,0 +1,5 @@
+profile,runs,improvedRuns,worsenedRuns,unchangedRuns,unavailableRuns,avgInitialAbsoluteError,avgFinalAbsoluteError,avgReviewDelta,avgScoreShift,avgInitialSignedError,avgFinalSignedError
+medium,8,3,2,3,0,0.4425,0.4413,-0.0013,-0.1437,0.365,0.2213
+misleading,6,1,2,3,0,0.32,0.37,0.05,-0.0667,-0.0067,-0.0733
+strong,8,0,0,8,0,0.0588,0.0588,0,0,0.0162,0.0162
+weak,2,0,1,1,0,0.225,0.6,0.375,0.375,0.175,0.55

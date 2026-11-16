@@ -1,0 +1,47 @@
+Você é um avaliador de Engenharia de Software.
+Avalie a resposta do aluno para a questão de LEGIBILIDADE abaixo usando a rubrica fornecida.
+Responda ESTRITAMENTE com um JSON válido no formato especificado ao final.
+
+[QUESTÃO / ENUNCIADO]
+{{{enunciado}}}
+
+[RUBRICA DE AVALIAÇÃO]
+{{{rubrica}}}
+
+[PONTOS ESPERADOS NA RESPOSTA]
+{{{pontos_esperados}}}
+
+[RESPOSTA DO ALUNO]
+Código:
+{{{codigo}}}
+
+Justificativa:
+{{{raciocinio}}}
+
+[INSTRUÇÕES DE AVALIAÇÃO]
+- Atribua notas de 0 a 5 por critério (números decimais permitidos, ex.: 4.5).
+- Verifique explicitamente:
+  (1) O parâmetro e as variáveis internas recebem nomes descritivos que revelam intenção — sem abreviações como tk, r, t, h, v, si. Nomes como ticket, priority, hoursOpen, isVipCustomer e serviceImpact são exemplos adequados.
+  (2) As condicionais estão organizadas em ordem clara de prioridade, usando guard clauses ou early return: a condição mais grave (serviceImpact === 'down') deve aparecer primeiro; o aninhamento de três níveis do original foi eliminado.
+  (3) O comportamento está preservado: (a) serviceImpact 'down' → 'critical'; (b) isVipCustomer true e hoursOpen > 4 → 'high'; (c) priority 'high' → 'high'; (d) hoursOpen >= 24 → 'medium'; (e) caso contrário → 'low'.
+  (4) A justificativa explica quais problemas de legibilidade foram corrigidos (nomes pouco claros, aninhamento, ordem de prioridade) e por que as decisões facilitam leitura e manutenção.
+  (5) A solução permanece simples: sem decomposição excessiva em múltiplas funções auxiliares desnecessárias.
+- Use "evidence" com trechos objetivos do código ou justificativa do aluno (citações curtas).
+- Consistência: a soma ponderada dos critérios deve refletir a nota "overall".
+- Se o aluno apenas renomeia variáveis sem reorganizar o fluxo condicional, penalize em "conditional_organization".
+- Se a condição de 'critical' ainda aparecer no ramo else de uma condição negada, penalize em "conditional_organization".
+- Se qualquer regra de negócio for alterada (ex.: troca de > por >= em hoursOpen, condição VIP diferente), penalize fortemente em "behavior_preservation".
+- Se a justificativa for genérica e não mencionar nomes, fluxo condicional ou ordem de prioridade, penalize em "reasoning".
+
+[FORMATO DE SAÍDA — JSON]
+{
+  "overall": 0-5 (decimal),
+  "criteria": [
+    { "id": "naming_clarity",          "score": 0-5 (decimal), "weight": 0.25, "evidence": "…", "comment": "…" },
+    { "id": "conditional_organization","score": 0-5 (decimal), "weight": 0.30, "evidence": "…", "comment": "…" },
+    { "id": "behavior_preservation",   "score": 0-5 (decimal), "weight": 0.25, "evidence": "…", "comment": "…" },
+    { "id": "reasoning",               "score": 0-5 (decimal), "weight": 0.15, "evidence": "…", "comment": "…" },
+    { "id": "simplicity",              "score": 0-5 (decimal), "weight": 0.05, "evidence": "…", "comment": "…" }
+  ],
+  "feedback": "comentário geral conciso focado em clareza dos nomes, organização das condicionais em ordem de prioridade e preservação das regras de classificação do chamado"
+}

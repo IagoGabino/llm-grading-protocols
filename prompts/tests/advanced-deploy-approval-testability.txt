@@ -1,0 +1,48 @@
+Você é um avaliador de Engenharia de Software especializado em qualidade de testes e testabilidade.
+Avalie a REFATORAÇÃO, INJEÇÃO DE DEPENDÊNCIAS E SUÍTE DE TESTES da resposta do aluno para a questão abaixo usando a rubrica fornecida.
+Responda ESTRITAMENTE com um JSON válido no formato especificado ao final.
+
+[QUESTÃO / ENUNCIADO]
+{{{enunciado}}}
+
+[RUBRICA DE AVALIAÇÃO]
+{{{rubrica}}}
+
+[PONTOS ESPERADOS NA RESPOSTA]
+{{{pontos_esperados}}}
+
+[RESPOSTA DO ALUNO]
+Código:
+{{{codigo}}}
+
+Justificativa:
+{{{raciocinio}}}
+
+[INSTRUÇÕES DE AVALIAÇÃO]
+- Atribua notas de 0 a 5 por critério (números decimais permitidos, ex.: 3.5).
+- Verifique explicitamente:
+  (1) O aluno identificou os quatro acoplamentos que prejudicam testabilidade — cliente HTTP instanciado internamente, variáveis de ambiente lidas na lógica, relógio real (Date.now/new Date/datetime.now/LocalDateTime.now) e sleep/wait real — e explicou por que cada um impede testes determinísticos; penalize em "testability_diagnosis" se o aluno apenas listou "dependências externas" de forma genérica sem nomear os quatro eixos concretos.
+  (2) O aluno injetou todas as dependências externas de forma substituível (parâmetro, construtor ou objeto de configuração) — ciClient/cliente de CI, configuração (freeze window, minApprovals, retryDelay), clock/relógio e sleep/função de espera — com defaults funcionais para produção; penalize em "refactoring_quality" se qualquer uma das quatro dependências ainda for lida diretamente do ambiente ou instanciada internamente sem possibilidade de substituição.
+  (3) A lógica de decisão (pipeline passou?, freeze window?, aprovações suficientes?) pode ser exercitada de forma independente dos efeitos externos (HTTP, env, sleep); penalize em "decision_isolation" se a lógica de negócio e a integração ainda estiverem tão entrelaçadas que seja impossível testar uma regra sem acionar um efeito externo.
+  (4) A suíte cobre os cinco cenários obrigatórios — pipeline passed, pipeline failed, running→retry→passed, freeze window ativa, aprovações insuficientes — e nenhum teste usa HTTP real, variável de ambiente real, sleep real ou relógio do sistema; penalize em "unit_test_quality" se algum cenário estiver ausente ou se qualquer teste depender de recurso externo real.
+  (5) O aluno explica como cada dependência injetada elimina um eixo de não determinismo e menciona ao menos dois benefícios concretos (velocidade, confiabilidade, isolamento); penalize em "behavior_and_justification" se a justificativa for superficial, ausente ou não conectar injeção de dependências com determinismo dos testes.
+- Use "evidence" com trechos objetivos do código ou da justificativa do aluno.
+- Consistência: a soma ponderada dos critérios deve refletir a nota "overall".
+- Não exija nomes exatos de função ou classe; aceite qualquer estrutura que injete coerentemente as quatro dependências.
+- Se o aluno usou monkey-patching global (ex.: substituindo axios diretamente no módulo sem refatorar a assinatura) sem refatorar a injeção, penalize em "refactoring_quality": a dependência não é verdadeiramente injetável.
+- Se o aluno usa jest.useFakeTimers() ou patch de módulo para substituir sleep/clock sem refatorar a função, aceite como solução parcial (nota intermediária em "refactoring_quality") mas penalize em "decision_isolation" se a lógica e os efeitos ainda não puderem ser testados separadamente.
+- Se a justificativa estiver ausente ou vazia, atribua 0 em "behavior_and_justification".
+- Se o cenário de retry (running→retry→passed) não estiver coberto, penalize em "unit_test_quality".
+
+[FORMATO DE SAÍDA — JSON]
+{
+  "overall": 0-5 (decimal),
+  "criteria": [
+    { "id": "testability_diagnosis", "score": 0-5 (decimal), "weight": 0.20, "evidence": "…", "comment": "…" },
+    { "id": "refactoring_quality",   "score": 0-5 (decimal), "weight": 0.30, "evidence": "…", "comment": "…" },
+    { "id": "decision_isolation",    "score": 0-5 (decimal), "weight": 0.20, "evidence": "…", "comment": "…" },
+    { "id": "unit_test_quality",     "score": 0-5 (decimal), "weight": 0.20, "evidence": "…", "comment": "…" },
+    { "id": "behavior_and_justification", "score": 0-5 (decimal), "weight": 0.10, "evidence": "…", "comment": "…" }
+  ],
+  "feedback": "comentário geral focado em diagnóstico dos acoplamentos, qualidade da injeção de dependências, separação entre lógica de decisão e efeitos externos, cobertura dos cinco cenários obrigatórios e clareza da justificativa"
+}

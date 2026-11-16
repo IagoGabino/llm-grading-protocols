@@ -1,0 +1,51 @@
+Avalie os testes unitários da resposta do aluno para a questão abaixo usando a rubrica fornecida.
+
+[QUESTÃO / ENUNCIADO]
+{{{enunciado}}}
+
+[RUBRICA DE AVALIAÇÃO]
+{{{rubrica}}}
+
+[PONTOS ESPERADOS NA RESPOSTA]
+{{{pontos_esperados}}}
+
+[RESPOSTA DO ALUNO]
+Código:
+{{{codigo}}}
+
+Justificativa:
+{{{raciocinio}}}
+
+[INSTRUÇÕES DE AVALIAÇÃO]
+- Atribua notas de 0 a 5 por critério (números decimais permitidos, ex.: 4.5).
+- Verifique explicitamente:
+  (1) Testa CPFs válidos (com e sem formatação)
+  (2) Testa CPFs inválidos (formato errado, tamanho incorreto, dígitos verificadores errados)
+  (3) Testa valores nulos/vazios (null, undefined, None, empty string)
+  (4) Testa sequências inválidas (111.111.111-11, 000.000.000-00, etc.)
+  (5) Cobre pelo menos 10-15 casos de teste
+  (6) Usa framework apropriado (Jest, pytest, JUnit)
+  (7) Testes organizados com describe/class ou equivalente
+  (8) Nomes de testes descritivos
+  (9) Segue padrão Arrange-Act-Assert
+  (10) Usa assertions apropriadas (toBe, assertTrue/False, etc.)
+  (11) Verifica valores de retorno corretos
+  (12) Testa casos extremos (formatação, dígitos verificadores, sequências)
+- Use "evidence" com trechos do código (cite nomes de testes e assertions).
+- Consistência: a soma ponderada dos critérios deve refletir a nota "overall".
+- Se menos de 8 testes, penalize fortemente em "test_coverage".
+- Se não testa null/vazio ou sequências inválidas, penalize em "edge_cases".
+
+[FORMATO DE SAÍDA — JSON]
+{
+  "overall": 0-5 (decimal),
+  "criteria": [
+    { "id": "test_coverage",  "score": 0-5 (decimal), "weight": 0.35, "evidence": "…", "comment": "…" },
+    { "id": "test_structure", "score": 0-5 (decimal), "weight": 0.25, "evidence": "…", "comment": "…" },
+    { "id": "assertions",     "score": 0-5 (decimal), "weight": 0.20, "evidence": "…", "comment": "…" },
+    { "id": "edge_cases",     "score": 0-5 (decimal), "weight": 0.20, "evidence": "…", "comment": "…" }
+  ],
+  "feedback": "comentário geral focado em quantos casos foram testados, estrutura dos testes, assertions corretas e cobertura de edge cases"
+}
+
+

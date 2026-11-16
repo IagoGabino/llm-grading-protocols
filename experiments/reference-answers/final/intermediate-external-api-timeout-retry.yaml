@@ -1,0 +1,412 @@
+questionSlug: intermediate-external-api-timeout-retry
+
+answers:
+  - id: intermediate-external-api-timeout-retry-strong
+    profile: strong
+    variant: complete_correct
+    language: javascript
+
+    code: |
+      // exchange-rate.js
+
+      const API_BASE_URL = 'https://api.exchangerates.example.com';
+      const TIMEOUT_MS  = 3000;
+      const MAX_RETRIES = 1;
+
+      async function fetchWithTimeout(url, timeoutMs) {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+        try {
+          const response = await fetch(url, { signal: controller.signal });
+          return response;
+        } finally {
+          clearTimeout(timer);
+        }
+      }
+
+      async function getExchangeRate(fromCurrency, toCurrency) {
+        const url = `${API_BASE_URL}/latest?base=${fromCurrency}&symbols=${toCurrency}`;
+        let lastError;
+
+        for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+          try {
+            const response = await fetchWithTimeout(url, TIMEOUT_MS);
+
+            // Erro permanente: não realiza retry
+            if (response.status >= 400 && response.status < 500) {
+              throw new Error(
+                `Exchange rate API client error: HTTP ${response.status} for ${fromCurrency}/${toCurrency}`
+              );
+            }
+
+            // Erro transitório: armazena para possível retry
+            if (!response.ok) {
+              lastError = new Error(
+                `Exchange rate API server error: HTTP ${response.status}`
+              );
+              continue;
+            }
+
+            let data;
+            try {
+              data = await response.json();
+            } catch {
+              throw new Error('Exchange rate API returned invalid JSON');
+            }
+
+            const rate = data?.rates?.[toCurrency];
+            if (typeof rate !== 'number' || isNaN(rate)) {
+              throw new Error(
+                `Exchange rate API response missing rate for ${toCurrency}`
+              );
+            }
+
+            return rate;
+
+          } catch (err) {
+            // Erros permanentes (4xx, JSON inválido, taxa ausente) são propagados imediatamente
+            if (
+              err.message.includes('client error') ||
+              err.message.includes('invalid JSON') ||
+              err.message.includes('missing rate')
+            ) {
+              throw err;
+            }
+
+            // Timeout ou erro de rede: elegível a retry
+            lastError = err.name === 'AbortError'
+              ? new Error(`Exchange rate API timeout after ${TIMEOUT_MS}ms`)
+              : err;
+          }
+        }
+
+        throw lastError ?? new Error('Exchange rate API failed after retries');
+      }
+
+      module.exports = { getExchangeRate, TIMEOUT_MS, MAX_RETRIES };
+
+    justification: |
+      1. Causa raiz:
+      O código original usa fetch() sem AbortController, deixando a requisição pendente
+      por tempo ilimitado quando a API fica lenta. Além disso, não verifica response.ok:
+      em JavaScript, fetch não lança erro para HTTP 4xx/5xx — o código prosseguia para
+      response.json() em qualquer status, e se o corpo de erro não contivesse
+      rates[toCurrency], gerava TypeError: Cannot read properties of undefined, que é
+      exatamente a mensagem observada nos logs de produção.
+
+      2. Timeout configurado com AbortController por tentativa:
+      Uso AbortController + clearTimeout em fetchWithTimeout. O timer é criado antes de
+      cada chamada fetch e cancelado no bloco finally após a resposta, garantindo que
+      não vaze entre tentativas. O erro AbortError é capturado e convertido em mensagem
+      descritiva: "Exchange rate API timeout after 3000ms".
+
+      3. Tratamento de falhas:
+      - HTTP 4xx: erro permanente (moeda inválida, chave expirada); propagado
+        imediatamente sem retry.
+      - HTTP 5xx: erro transitório; armazenado em lastError e o loop continua para
+        a próxima tentativa.
+      - JSON inválido: erro permanente de contrato da API; propagado sem retry.
+      - Ausência de rates[toCurrency]: erro de contrato; propagado sem retry.
+      Em nenhum caso a função retorna undefined, null ou NaN.
+
+      4. Estratégia de retry:
+      O loop for itera de 0 a MAX_RETRIES (inclusive), totalizando no máximo 2
+      tentativas. O retry só ocorre para timeout, erro de rede e HTTP 5xx. Erros
+      permanentes são lançados diretamente. Após esgotar as tentativas, o último
+      erro é relançado com mensagem descritiva.
+
+      5. Trade-offs:
+      - Latência adicional: no pior caso, 2 timeouts de 3s cada resultam em até 6s
+        de espera antes do erro final.
+      - Idempotência: GET de cotação é seguro para retry — sem efeito colateral.
+      - Retry agressivo: limite fixo de 1 tentativa evita amplificação de carga
+        em cascata durante degradação da API. Circuit breaker ou cache de última
+        cotação seriam opções para cenários de degradação prolongada.
+
+    expectedOverall: 4.85
+    expectedCriteria:
+      - criterionId: root_cause
+        expectedScore: 5.0
+        rationale: |
+          Identifica as duas causas raiz com precisão: (1) ausência de timeout deixa
+          fetch pendente por tempo ilimitado; (2) fetch não lança erro para status
+          HTTP não-ok, e o acesso a data.rates[toCurrency] em corpo de erro gera
+          o TypeError observado nos logs. Diagnóstico completo e conectado aos
+          logs de produção.
+
+      - criterionId: timeout_fix
+        expectedScore: 5.0
+        rationale: |
+          AbortController criado por tentativa dentro de fetchWithTimeout. clearTimeout
+          no finally evita vazamento de timer entre tentativas. AbortError capturado
+          e convertido em erro descritivo. Timeout de 3000ms (TIMEOUT_MS) respeitado.
+          Implementação idiomática e correta para JavaScript.
+
+      - criterionId: error_handling
+        expectedScore: 4.5
+        rationale: |
+          4xx tratado como permanente (sem retry), 5xx como transitório, JSON inválido
+          capturado em try/catch aninhado, ausência de rates[toCurrency] verificada
+          com typeof === 'number' && !isNaN. Nenhum retorno de undefined/null/NaN.
+          Pequena penalização: a verificação de erros permanentes via err.message.includes()
+          é funcional mas frágil — seria mais robusto usar um campo estruturado no erro.
+
+      - criterionId: retry_strategy
+        expectedScore: 5.0
+        rationale: |
+          Loop for com limite MAX_RETRIES = 1 (2 tentativas no total). Retry somente
+          para timeout, erro de rede e HTTP 5xx. 4xx, JSON inválido e taxa ausente
+          propagam imediatamente, sem retry. Não há loop infinito. lastError garante
+          que a causa final seja propagada com mensagem descritiva.
+
+      - criterionId: explanation
+        expectedScore: 4.5
+        rationale: |
+          Cobre os 5 pontos pedidos: causa raiz, timeout, tratamento de erros,
+          estratégia de retry e trade-offs (latência, idempotência, risco de retry
+          agressivo, menção a circuit breaker e cache). Poderia quantificar melhor
+          o impacto de latência acumulada, mas está completo e tecnicamente preciso.
+
+    notes: |
+      expectedOverall = (5.0×0.25) + (5.0×0.30) + (4.5×0.20) + (5.0×0.15) + (4.5×0.10)
+                      = 1.25 + 1.50 + 0.90 + 0.75 + 0.45
+                      = 4.85.
+
+  - id: intermediate-external-api-timeout-retry-medium
+    profile: medium
+    variant: partial_correct
+    language: javascript
+
+    code: |
+      // exchange-rate.js
+
+      const API_BASE_URL = 'https://api.exchangerates.example.com';
+      const TIMEOUT_MS  = 3000;
+      const MAX_RETRIES = 1;
+
+      async function getExchangeRate(fromCurrency, toCurrency) {
+        const url = `${API_BASE_URL}/latest?base=${fromCurrency}&symbols=${toCurrency}`;
+        let lastError;
+
+        for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+          try {
+            const controller = new AbortController();
+            const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+
+            let response;
+            try {
+              response = await fetch(url, { signal: controller.signal });
+            } finally {
+              clearTimeout(timer);
+            }
+
+            if (!response.ok) {
+              // Trata qualquer erro HTTP como transitório e retenta
+              lastError = new Error(`HTTP error: ${response.status}`);
+              continue;
+            }
+
+            const data = await response.json();
+            return data.rates[toCurrency];
+
+          } catch (err) {
+            lastError = err.name === 'AbortError'
+              ? new Error(`Request timed out after ${TIMEOUT_MS}ms`)
+              : err;
+          }
+        }
+
+        throw lastError ?? new Error('Failed to fetch exchange rate');
+      }
+
+      module.exports = { getExchangeRate, TIMEOUT_MS, MAX_RETRIES };
+
+    justification: |
+      O problema original tem três falhas: o fetch não tem timeout, então a requisição
+      fica pendente por tempo indeterminado; o status HTTP não é verificado, então
+      respostas de erro são processadas como sucesso; e não há retry para erros
+      transitórios.
+
+      Corrigi usando AbortController com timer de 3 segundos. Se o AbortError for
+      disparado, capturo e converto em mensagem descritiva. Para respostas com status
+      não-ok, armazeno o erro e retento na próxima iteração. O loop garante no máximo
+      2 tentativas.
+
+      O GET é idempotente, então retry é seguro aqui. O trade-off é a latência
+      adicional: no pior caso, 6 segundos de espera antes de falhar.
+
+    expectedOverall: 3.58
+    expectedCriteria:
+      - criterionId: root_cause
+        expectedScore: 4.0
+        rationale: |
+          Identifica as três falhas: ausência de timeout, falta de verificação de
+          status HTTP e ausência de retry. Não explica especificamente por que em
+          JavaScript fetch não lança erro para HTTP não-ok, nem conecta o TypeError
+          dos logs ao acesso a data.rates em corpo de erro. Diagnóstico correto mas
+          superficial na conexão com os logs de produção.
+
+      - criterionId: timeout_fix
+        expectedScore: 5.0
+        rationale: |
+          AbortController criado por tentativa, clearTimeout no finally, AbortError
+          capturado e convertido em mensagem descritiva. Implementação correta e
+          idiomática para JavaScript. Timeout de TIMEOUT_MS = 3000ms respeitado.
+
+      - criterionId: error_handling
+        expectedScore: 2.0
+        rationale: |
+          Verifica response.ok corretamente. Porém: (1) não distingue 4xx de 5xx —
+          trata qualquer HTTP não-ok como transitório e realiza retry inclusive para
+          400/404; (2) não valida que data.rates[toCurrency] existe — retorna
+          undefined se a taxa estiver ausente; (3) não trata JSON inválido em
+          response.json(). A função pode retornar undefined, violando o contrato.
+
+      - criterionId: retry_strategy
+        expectedScore: 2.5
+        rationale: |
+          Loop com limite MAX_RETRIES = 1 (2 tentativas). Porém retenta para
+          qualquer HTTP não-ok, incluindo 4xx. O enunciado é explícito: 4xx não
+          deve receber retry. A estratégia está parcialmente correta no limite de
+          tentativas, mas incorreta na condição de retry.
+
+      - criterionId: explanation
+        expectedScore: 3.0
+        rationale: |
+          Cobre causa raiz, timeout e idempotência/latência como trade-off. Não
+          discute a distinção 4xx vs 5xx para retry, não menciona tratamento de
+          JSON inválido nem ausência de taxa, e não discute riscos de retry
+          agressivo além da latência. Justificativa parcial e incompleta nos
+          pontos centrais.
+
+    notes: |
+      expectedOverall = (4.0×0.25) + (5.0×0.30) + (2.0×0.20) + (2.5×0.15) + (3.0×0.10)
+                      = 1.00 + 1.50 + 0.40 + 0.375 + 0.30
+                      = 3.575 → arredondado para 3.58.
+      As lacunas em error_handling e retry_strategy são estruturais: retornar
+      undefined e retentar 4xx contradizem explicitamente o contrato e o enunciado.
+
+  - id: intermediate-external-api-timeout-retry-misleading
+    profile: misleading
+    variant: good_writing_low_coverage
+    language: javascript
+
+    code: |
+      // exchange-rate.js
+
+      const API_BASE_URL = 'https://api.exchangerates.example.com';
+      const TIMEOUT_MS  = 3000;
+      const MAX_RETRIES = 1;
+
+      function timeoutPromise(ms) {
+        return new Promise((_, reject) =>
+          setTimeout(() => reject(new Error(`Request timed out after ${ms}ms`)), ms)
+        );
+      }
+
+      async function getExchangeRate(fromCurrency, toCurrency) {
+        const url = `${API_BASE_URL}/latest?base=${fromCurrency}&symbols=${toCurrency}`;
+        let attempts = 0;
+
+        while (attempts <= MAX_RETRIES) {
+          attempts++;
+          try {
+            const response = await Promise.race([
+              fetch(url),
+              timeoutPromise(TIMEOUT_MS),
+            ]);
+
+            const data = await response.json();
+            const rate = data.rates[toCurrency];
+
+            if (!rate) {
+              throw new Error(`Rate not found for ${toCurrency}`);
+            }
+
+            return rate;
+
+          } catch (err) {
+            if (attempts > MAX_RETRIES) {
+              throw new Error(`Failed to fetch exchange rate: ${err.message}`);
+            }
+          }
+        }
+      }
+
+      module.exports = { getExchangeRate, TIMEOUT_MS, MAX_RETRIES };
+
+    justification: |
+      O problema tem três causas: ausência de timeout (a requisição fica pendente
+      indefinidamente), falta de verificação de status HTTP e ausência de retry
+      para falhas transitórias.
+
+      Para o timeout, usei Promise.race com uma Promise que rejeita após 3 segundos.
+      Isso é simples e eficaz: se o fetch demorar mais que TIMEOUT_MS, a Promise de
+      timeout vence a corrida e a função recebe o erro de timeout.
+
+      Para retry, implementei um loop while que repete a tentativa até MAX_RETRIES
+      vezes quando qualquer erro ocorre. Se após todas as tentativas ainda houver
+      erro, ele é relançado com mensagem descritiva.
+
+      Valido que a taxa existe antes de retornar, evitando retornar undefined.
+      O GET é idempotente, então retry é seguro. O trade-off é a latência adicional
+      de até 3 segundos por tentativa extra.
+
+    expectedOverall: 2.23
+    expectedCriteria:
+      - criterionId: root_cause
+        expectedScore: 4.0
+        rationale: |
+          Identifica corretamente as três causas: ausência de timeout, falta de
+          verificação de status e ausência de retry. Usa terminologia adequada.
+          Não explica por que fetch não lança erro para HTTP não-ok nem conecta
+          o TypeError dos logs ao acesso a data.rates em corpo de erro.
+
+      - criterionId: timeout_fix
+        expectedScore: 1.5
+        rationale: |
+          Promise.race com timeoutPromise não é uma implementação correta de timeout
+          por tentativa em JavaScript: (1) o fetch original continua executando em
+          background mesmo após o timeout vencer — não há cancelamento real da
+          requisição; (2) o timer de timeoutPromise não é limpo após uma resposta
+          bem-sucedida, causando possível vazamento de memória; (3) na segunda
+          tentativa, um novo fetch é criado, mas o do timeout anterior ainda pode
+          estar pendente. AbortController com signal é a solução idiomática e
+          correta para cancelar fetch em JavaScript.
+
+      - criterionId: error_handling
+        expectedScore: 1.0
+        rationale: |
+          Não verifica response.ok nem response.status: respostas HTTP 4xx/5xx
+          são processadas como sucesso e chegam a response.json(). Se o corpo
+          de erro for JSON válido mas sem rates[toCurrency], a validação `if (!rate)`
+          captura o caso; mas se o corpo de erro não for JSON, response.json() lança
+          exceção genérica que vai para o catch e é retentada. Não distingue 4xx de
+          5xx. O `if (!rate)` falha para rate=0 (valor falsy mas válido). A função
+          pode engolir erros e retentar condições permanentes.
+
+      - criterionId: retry_strategy
+        expectedScore: 1.5
+        rationale: |
+          Loop while com limite de MAX_RETRIES está presente. Porém retenta qualquer
+          tipo de erro, incluindo 4xx e JSON inválido — violação explícita do contrato.
+          O limite de tentativas funciona, mas a condição de retry é incorreta.
+
+      - criterionId: explanation
+        expectedScore: 3.5
+        rationale: |
+          A justificativa está bem escrita e cobre causa raiz, abordagem de timeout,
+          retry e idempotência. O argumento de que Promise.race é "simples e eficaz"
+          soa convincente. Porém não discute os problemas estruturais da abordagem:
+          fetch não cancelado, timer não limpo, ausência de distinção 4xx/5xx e
+          falha para rate=0. A justificativa mascara as falhas técnicas da implementação.
+
+    notes: |
+      expectedOverall = (4.0×0.25) + (1.5×0.30) + (1.0×0.20) + (1.5×0.15) + (3.5×0.10)
+                      = 1.00 + 0.45 + 0.20 + 0.225 + 0.35
+                      = 2.225 → arredondado para 2.23.
+      A resposta é misleading: timeout sem AbortController (fetch não cancelado),
+      sem verificação de status HTTP e retry sem distinção 4xx/5xx. O texto é
+      convincente e o limite de tentativas funciona, mas os três critérios centrais
+      da questão têm implementações estruturalmente incorretas.

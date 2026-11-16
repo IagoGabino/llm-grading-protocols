@@ -1,0 +1,68 @@
+{
+  "runId": "multi-aggregate__intermediate-n-plus-one-queries__intermediate-n-plus-one-queries-strong__0f1d052963",
+  "rawOutputs": [
+    {
+      "output": "{\n  \"overall\": 5,\n  \"criteria\": [\n    {\n      \"id\": \"root_cause\",\n      \"score\": 5,\n      \"weight\": 0.25,\n      \"evidence\": [\n        \"O código original executa db.query dentro do loop for...of: para cada uma das N faturas, dispara uma query individual ao banco (SELECT WHERE id = ?). Somada à query inicial de faturas, o total é N+1 idas ao banco. Para 100 faturas, são 101 queries. O problema é agravado por IDs repetidos: o mesmo cliente pode ser buscado múltiplas vezes, desperdiçando I/O adicional.\"\n      ],\n      \"comment\": \"O aluno identificou corretamente a causa raiz do problema N+1, explicando que o loop gera uma query por fatura, somando à query inicial, e mencionou o agravamento por IDs repetidos.\"\n    },\n    {\n      \"id\": \"batching_fix\",\n      \"score\": 5,\n      \"weight\": 0.35,\n      \"evidence\": [\n        \"const uniqueIds = [...new Set(invoices.map(i => i.customer_id))];\",\n        \"const placeholders = uniqueIds.map(() => '?').join(', ');\",\n        \"const customers = await db.query(`SELECT * FROM customers WHERE id IN (${placeholders})`, uniqueIds);\",\n        \"if (invoices.length === 0) { return []; }\"\n      ],\n      \"comment\": \"O aluno extraiu os customer_ids únicos usando `Set` e executou uma única query em lote com a cláusula `IN`. A solução também trata corretamente o caso de lista vazia de faturas, evitando a segunda query.\"\n    },\n    {\n      \"id\": \"memory_join\",\n      \"score\": 5,\n      \"weight\": 0.25,\n      \"evidence\": [\n        \"const customerMap = new Map(customers.map(c => [c.id, c]));\",\n        \"for (const invoice of invoices) { invoice.customer = customerMap.get(invoice.customer_id) ?? null; }\",\n        \"Com o Map, o loop de associação executa um get por fatura — operação O(1) amortizada. O total do passo de associação é O(N). Sem o Map, usar customers.find(c => c.id === invoice.customer_id) dentro do loop seria O(N) por fatura, resultando em O(N²) no total.\"\n      ],\n      \"comment\": \"O aluno construiu um `Map` para associar `customer_id` a `customer` e utilizou-o para atribuir o cliente a cada fatura em O(N), evitando loops aninhados e explicando a complexidade corretamente.\"\n    },\n    {\n      \"id\": \"contract_preservation\",\n      \"score\": 5,\n      \"weight\": 0.15,\n      \"evidence\": [\n        \"async function getInvoicesWithCustomers() { ... }\",\n        \"invoice.customer = customerMap.get(invoice.customer_id) ?? null;\",\n        \"return invoices;\"\n      ],\n      \"comment\": \"A função `getInvoicesWithCustomers` manteve sua assinatura pública e o formato de retorno, com cada objeto de fatura contendo a propriedade `customer` preenchida.\"\n    }\n  ],\n  \"feedback\": \"Excelente trabalho! A correção do bug N+1 foi implementada de forma impecável, seguindo todas as diretrizes da rubrica. A identificação da causa raiz, a implementação do batching com `IN`, a associação em memória com `Map` em complexidade O(N) e a preservação do contrato de saída foram executadas com maestria. A justificativa é clara e demonstra profundo entendimento do problema e da solução.\"\n}",
+      "model": "google/gemini-2.5-flash",
+      "callIndex": 1,
+      "metadata": {
+        "engineStatus": "success",
+        "usage": {
+          "promptTokens": 3286,
+          "completionTokens": 864,
+          "totalTokens": 4150,
+          "reasoningTokens": 0,
+          "cachedTokens": 0,
+          "cacheWriteTokens": 0,
+          "costCredits": 0.0031458,
+          "upstreamInferenceCost": 0.0031458
+        },
+        "subcallIndex": 1,
+        "promptVariantId": "rubric_adherence",
+        "promptVariantInstruction": "Nesta avaliação, priorize a aderência estrita à rubrica. Atribua os scores considerando cuidadosamente os critérios, descritores e pesos definidos. Penalize respostas que pareçam boas de forma geral, mas que não atendam explicitamente ao que o critério avalia. Não use critérios externos à rubrica."
+      }
+    },
+    {
+      "output": "{\n  \"overall\": 5,\n  \"criteria\": [\n    {\n      \"id\": \"root_cause\",\n      \"score\": 5,\n      \"weight\": 0.25,\n      \"evidence\": [\n        \"O código original executa db.query dentro do loop for...of: para cada uma das N faturas, dispara uma query individual ao banco (SELECT WHERE id = ?). Somada à query inicial de faturas, o total é N+1 idas ao banco. Para 100 faturas, são 101 queries. O problema é agravado por IDs repetidos: o mesmo cliente pode ser buscado múltiplas vezes, desperdiçando I/O adicional.\"\n      ],\n      \"comment\": \"O aluno identificou e explicou claramente a causa raiz do problema N+1, incluindo o impacto de IDs repetidos.\"\n    },\n    {\n      \"id\": \"batching_fix\",\n      \"score\": 5,\n      \"weight\": 0.35,\n      \"evidence\": [\n        \"const uniqueIds = [...new Set(invoices.map(i => i.customer_id))];\",\n        \"const placeholders = uniqueIds.map(() => '?').join(', ');\",\n        \"const customers = await db.query(`SELECT * FROM customers WHERE id IN (${placeholders})`, uniqueIds);\",\n        \"if (invoices.length === 0) { return []; }\"\n      ],\n      \"comment\": \"O aluno extraiu corretamente os IDs únicos usando `Set` e executou uma única query em lote com a cláusula `IN`. O tratamento para lista vazia de faturas também está correto, evitando a segunda query desnecessária.\"\n    },\n    {\n      \"id\": \"memory_join\",\n      \"score\": 5,\n      \"weight\": 0.25,\n      \"evidence\": [\n        \"const customerMap = new Map(customers.map(c => [c.id, c]));\",\n        \"for (const invoice of invoices) { invoice.customer = customerMap.get(invoice.customer_id) ?? null; }\",\n        \"Com o Map, o loop de associação executa um get por fatura — operação O(1) amortizada. O total do passo de associação é O(N). Sem o Map, usar customers.find(c => c.id === invoice.customer_id) dentro do loop seria O(N) por fatura, resultando em O(N²) no total.\"\n      ],\n      \"comment\": \"O aluno construiu um mapa de `customer_id` para `customer` e o utilizou para associar os clientes às faturas em memória com complexidade O(N), evitando loops aninhados O(N²). A explicação da complexidade está correta.\"\n    },\n    {\n      \"id\": \"contract_preservation\",\n      \"score\": 5,\n      \"weight\": 0.15,\n      \"evidence\": [\n        \"async function getInvoicesWithCustomers() { ... }\",\n        \"invoice.customer = customerMap.get(invoice.customer_id) ?? null;\",\n        \"return invoices;\"\n      ],\n      \"comment\": \"A assinatura da função `getInvoicesWithCustomers` foi preservada e o formato de retorno (lista de faturas com a propriedade `customer` preenchida) foi mantido, conforme o contrato.\"\n    }\n  ],\n  \"feedback\": \"Excelente trabalho! A correção do bug N+1 foi implementada de forma impecável, seguindo todas as diretrizes da rubrica. A identificação da causa raiz, a implementação do batching com `IN`, a associação em memória com mapa O(N) e a preservação do contrato foram executadas com maestria. A justificativa é clara e detalhada, demonstrando um profundo entendimento do problema e da solução.\"\n}",
+      "model": "google/gemini-2.5-flash",
+      "callIndex": 2,
+      "metadata": {
+        "engineStatus": "success",
+        "usage": {
+          "promptTokens": 3280,
+          "completionTokens": 855,
+          "totalTokens": 4135,
+          "reasoningTokens": 0,
+          "cachedTokens": 0,
+          "cacheWriteTokens": 0,
+          "costCredits": 0.0031215,
+          "upstreamInferenceCost": 0.0031215
+        },
+        "subcallIndex": 2,
+        "promptVariantId": "textual_evidence",
+        "promptVariantInstruction": "Nesta avaliação, priorize evidências textuais presentes na resposta avaliada. Ao atribuir os scores, considere principalmente o que está explicitamente demonstrado no texto. Evite inferir conhecimento implícito quando ele não estiver sustentado por trechos, argumentos, exemplos ou explicações presentes na resposta."
+      }
+    },
+    {
+      "output": "{\n  \"overall\": 5,\n  \"criteria\": [\n    {\n      \"id\": \"root_cause\",\n      \"score\": 5,\n      \"weight\": 0.25,\n      \"evidence\": [\n        \"O código original executa db.query dentro do loop for...of: para cada uma das N faturas, dispara uma query individual ao banco (SELECT WHERE id = ?). Somada à query inicial de faturas, o total é N+1 idas ao banco. Para 100 faturas, são 101 queries. O problema é agravado por IDs repetidos: o mesmo cliente pode ser buscado múltiplas vezes, desperdiçando I/O adicional.\"\n      ],\n      \"comment\": \"O aluno identificou e explicou corretamente a causa raiz do problema N+1, incluindo o impacto de IDs repetidos.\"\n    },\n    {\n      \"id\": \"batching_fix\",\n      \"score\": 5,\n      \"weight\": 0.35,\n      \"evidence\": [\n        \"const uniqueIds = [...new Set(invoices.map(i => i.customer_id))];\",\n        \"const placeholders = uniqueIds.map(() => '?').join(', ');\",\n        \"const customers = await db.query(`SELECT * FROM customers WHERE id IN (${placeholders})`, uniqueIds);\",\n        \"if (invoices.length === 0) { return []; }\"\n      ],\n      \"comment\": \"O aluno implementou o batching corretamente, extraindo IDs únicos com `Set` e usando uma única query `IN`. O tratamento para lista vazia de faturas também está correto, evitando a segunda query desnecessária.\"\n    },\n    {\n      \"id\": \"memory_join\",\n      \"score\": 5,\n      \"weight\": 0.25,\n      \"evidence\": [\n        \"const customerMap = new Map(customers.map(c => [c.id, c]));\",\n        \"for (const invoice of invoices) { invoice.customer = customerMap.get(invoice.customer_id) ?? null; }\",\n        \"Com o Map, o loop de associação executa um get por fatura — operação O(1) amortizada. O total do passo de associação é O(N). Sem o Map, usar customers.find(c => c.id === invoice.customer_id) dentro do loop seria O(N) por fatura, resultando em O(N²) no total.\"\n      ],\n      \"comment\": \"A associação em memória foi feita de forma eficiente usando um `Map` para acesso O(1), e o aluno explicou claramente a diferença de complexidade entre O(N) e O(N²).\"\n    },\n    {\n      \"id\": \"contract_preservation\",\n      \"score\": 5,\n      \"weight\": 0.15,\n      \"evidence\": [\n        \"async function getInvoicesWithCustomers() { ... }\",\n        \"invoice.customer = customerMap.get(invoice.customer_id) ?? null;\",\n        \"return invoices;\"\n      ],\n      \"comment\": \"A assinatura da função foi preservada e o formato de retorno (lista de faturas com a propriedade `customer` preenchida) foi mantido conforme o contrato original.\"\n    }\n  ],\n  \"feedback\": \"Excelente trabalho! A correção do bug N+1 foi implementada de forma impecável, seguindo todas as diretrizes da rubrica. A explicação da causa raiz, a extração de IDs únicos com batching, a associação em memória com mapa O(N) e a preservação do contrato foram abordadas de maneira completa e correta. O código é limpo e eficiente.\"\n}",
+      "model": "google/gemini-2.5-flash",
+      "callIndex": 3,
+      "metadata": {
+        "engineStatus": "success",
+        "usage": {
+          "promptTokens": 3282,
+          "completionTokens": 823,
+          "totalTokens": 4105,
+          "reasoningTokens": 0,
+          "cachedTokens": 0,
+          "cacheWriteTokens": 0,
+          "costCredits": 0.0030421,
+          "upstreamInferenceCost": 0.0030421
+        },
+        "subcallIndex": 3,
+        "promptVariantId": "conceptual_coverage",
+        "promptVariantInstruction": "Nesta avaliação, priorize a cobertura conceitual da resposta. Verifique se os conceitos centrais esperados foram abordados de maneira correta e suficiente, mesmo que a organização, redação ou terminologia não sejam ideais. Penalize omissões conceituais relevantes e confusões entre conceitos importantes."
+      }
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+Avalie os TESTES da resposta do aluno para a questão abaixo.
+
+[QUESTÃO]
+{{{enunciado}}}
+
+[RUBRICA]
+{{{rubrica}}}
+
+[PONTOS ESPERADOS]
+{{{pontos_esperados}}}
+
+[RESPOSTA DO ALUNO]
+{{{resposta}}}
+
+[INSTRUÇÕES]
+- Verifique se o aluno escreveu pelo menos 3 testes
+- Os testes devem cobrir: números positivos, zero, e negativos
+- Use expect() e toBe() corretamente
+- Nomes dos testes devem ser descritivos
+- Atribua notas de 0 a 5 por critério

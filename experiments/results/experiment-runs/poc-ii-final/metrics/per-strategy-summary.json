@@ -1,0 +1,47 @@
+[
+  {
+    "strategy": "single",
+    "plannedRuns": 24,
+    "foundRuns": 24,
+    "successRuns": 24,
+    "successRate": 1,
+    "overallMAE": 0.2658,
+    "overallMeanSignedError": 0.14,
+    "criterionMAE": 0.5143,
+    "totalCallCount": 24,
+    "avgCallCount": 1,
+    "totalCostCredits": 0.0928855,
+    "avgLatencyMs": 7006.5833,
+    "maxLatencyMs": 14964
+  },
+  {
+    "strategy": "review",
+    "plannedRuns": 24,
+    "foundRuns": 24,
+    "successRuns": 24,
+    "successRate": 1,
+    "overallMAE": 0.3092,
+    "overallMeanSignedError": 0.1067,
+    "criterionMAE": 0.519,
+    "totalCallCount": 48,
+    "avgCallCount": 2,
+    "totalCostCredits": 0.1821893,
+    "avgLatencyMs": 12949.8333,
+    "maxLatencyMs": 18640
+  },
+  {
+    "strategy": "multi_aggregate",
+    "plannedRuns": 24,
+    "foundRuns": 24,
+    "successRuns": 24,
+    "successRate": 1,
+    "overallMAE": 0.255,
+    "overallMeanSignedError": 0.0983,
+    "criterionMAE": 0.4538,
+    "totalCallCount": 72,
+    "avgCallCount": 3,
+    "totalCostCredits": 0.2784707,
+    "avgLatencyMs": 20195.75,
+    "maxLatencyMs": 27104
+  }
+]

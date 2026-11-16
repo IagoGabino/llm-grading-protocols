@@ -1,0 +1,44 @@
+Avalie a correção de BUG da resposta do aluno para a questão abaixo usando a rubrica fornecida.
+
+[QUESTÃO / ENUNCIADO]
+{{{enunciado}}}
+
+[RUBRICA DE AVALIAÇÃO]
+{{{rubrica}}}
+
+[PONTOS ESPERADOS NA RESPOSTA]
+{{{pontos_esperados}}}
+
+[RESPOSTA DO ALUNO]
+Código:
+{{{codigo}}}
+
+Justificativa:
+{{{raciocinio}}}
+
+[INSTRUÇÕES DE AVALIAÇÃO]
+- Atribua notas de 0 a 5 por critério (números decimais permitidos, ex.: 4.5).
+- Verifique explicitamente:
+  (1) Se o aluno identifica que a causa raiz é a inclusão de objetos não serializáveis (referência circular, objeto de request bruto, tipos especiais) diretamente no payload de auditoria, e que essa falha não tratada propaga para o fluxo principal derrubando a API mesmo após a operação de negócio ter sido concluída com sucesso.
+  (2) Se o aluno constrói explicitamente um objeto de auditoria sanitizado com apenas campos seguros e primitivos — como organizationId, actorId, changedFields, requestId e timestamp — sem incluir o objeto de request/contexto bruto. Penalize fortemente em "safe_projection" se a solução apenas envolve JSON.stringify em try/catch sem remover o objeto não serializável do payload, pois a referência circular continuaria causando erro de serialização.
+  (3) Se a operação de atualização de configuração (db.organizations.updateSettings ou equivalente) é preservada e continua retornando sucesso independentemente de falhas de auditoria — ou seja, se a exceção de auditoria é capturada em bloco try/catch (JS/Java) ou try/except (Python) sem ser relançada para o chamador.
+  (4) Se a falha de auditoria possui observabilidade mínima — pelo menos um log (console.error, logger.error ou equivalente) registrando o organizationId e o motivo do erro. Penalize fortemente em "flow_isolation" se o catch for completamente silencioso (bloco vazio ou apenas comentário) sem nenhum registro.
+  (5) Se o aluno discute explicitamente os trade-offs da abordagem: o que se perde ao excluir o requestContext completo, o risco de mascarar falhas sistêmicas de auditoria com captura genérica, e por que isolar a auditoria do fluxo principal é preferível a falhar a operação inteira.
+- Não penalize soluções que preservam campos adicionais além dos mínimos (ex.: valores anteriores e novos de settings), desde que esses campos sejam primitivos ou objetos simples sem referências circulares.
+- Não aceite como solução completa a simples remoção do registro de auditoria — penalize fortemente em "safe_projection" e em "useful_audit".
+- Não aceite como solução capturar a exceção com catch vazio sem nenhum log — penalize fortemente em "flow_isolation".
+- Use "evidence" com trechos objetivos do código ou da justificativa do aluno (cite a projeção do objeto seguro, o bloco try/catch, o logger, e as explicações de trade-off).
+- Consistência: a soma ponderada dos critérios deve refletir a nota "overall".
+
+[FORMATO DE SAÍDA — JSON]
+{
+  "overall": 0-5 (decimal),
+  "criteria": [
+    { "id": "root_cause",          "score": 0-5 (decimal), "weight": 0.25, "evidence": "...", "comment": "..." },
+    { "id": "safe_projection",     "score": 0-5 (decimal), "weight": 0.30, "evidence": "...", "comment": "..." },
+    { "id": "flow_isolation",      "score": 0-5 (decimal), "weight": 0.25, "evidence": "...", "comment": "..." },
+    { "id": "useful_audit",        "score": 0-5 (decimal), "weight": 0.10, "evidence": "...", "comment": "..." },
+    { "id": "tradeoff_explanation","score": 0-5 (decimal), "weight": 0.10, "evidence": "...", "comment": "..." }
+  ],
+  "feedback": "comentário geral conciso focado na qualidade da sanitização do payload de auditoria, no isolamento correto da falha e na clareza da justificativa dos trade-offs"
+}

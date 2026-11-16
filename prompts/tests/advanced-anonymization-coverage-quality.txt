@@ -1,0 +1,45 @@
+Você é um avaliador de Engenharia de Software especializado em qualidade de testes e cobertura.
+Avalie o DIAGNÓSTICO DE COBERTURA e a SUÍTE DE TESTES MELHORADA da resposta do aluno para a questão abaixo usando a rubrica fornecida.
+Responda ESTRITAMENTE com um JSON válido no formato especificado ao final.
+
+[QUESTÃO / ENUNCIADO]
+{{{enunciado}}}
+
+[RUBRICA DE AVALIAÇÃO]
+{{{rubrica}}}
+
+[PONTOS ESPERADOS NA RESPOSTA]
+{{{pontos_esperados}}}
+
+[RESPOSTA DO ALUNO]
+Código:
+{{{codigo}}}
+
+Justificativa:
+{{{raciocinio}}}
+
+[INSTRUÇÕES DE AVALIAÇÃO]
+- Atribua notas de 0 a 5 por critério (números decimais permitidos, ex.: 3.5).
+- Verifique explicitamente:
+  (1) O aluno explica por que a suíte original é enganosa apesar da alta cobertura de linhas — especificamente que os asserts (toBeTruthy, toBeDefined, not.toThrow) não inspecionam valores e que bugs de vazamento de campo sensível passariam todos os testes — penalize em "coverage_diagnosis" se o aluno tratar cobertura de linhas e qualidade de testes como sinônimos.
+  (2) A suíte melhorada contém asserts com valores concretos para: (a) email mascarado no formato esperado (ex.: "***@example.com"); (b) phone mascarado expondo apenas os dois últimos dígitos (ex.: "****34"); (c) fullName substituído por "REDACTED"; (d) id, role e createdAt preservados com o mesmo valor do input — penalize em "sensitive_field_assertions" se os asserts usarem apenas toBeDefined(), assertIsNotNone() ou verificações de presença de chave sem comparar o valor.
+  (3) Existe teste que verifica que o objeto original não foi modificado após a chamada (comparando valores de email, fullName ou phone antes e depois) e há pelo menos dois casos de borda (phone ausente sem exceção, phone ausente sem campo no resultado, ou objeto sem fullName) — penalize em "immutability_and_edge_cases" se nenhum dos dois aspectos estiver presente.
+  (4) O aluno associa cada grupo de testes a um bug concreto que seria detectado — por exemplo: "se email não for mascarado, o teste falha porque compara com '***@example.com'"; "se o objeto for mutado, o teste de imutabilidade detecta que user.email mudou" — penalize em "bug_detection_reasoning" se a justificativa for genérica sem vincular teste a falha específica.
+  (5) A discussão sobre cobertura menciona que line coverage não verifica valores produzidos e cita pelo menos uma métrica complementar (branch coverage, assertion density ou mutation testing conceitualmente) — penalize em "line_vs_branch_coverage" se a discussão for ausente ou se limitar a "precisamos de mais testes".
+- Use "evidence" com trechos objetivos do código ou da justificativa do aluno.
+- Penalize em "sensitive_field_assertions" se o aluno verificar apenas que o email é diferente do original sem verificar o formato completo esperado.
+- Penalize em "immutability_and_edge_cases" se o teste de imutabilidade apenas verificar que o objeto retornado é diferente do input por referência, sem inspecionar os valores individuais.
+- Consistência: a soma ponderada dos critérios deve refletir a nota "overall".
+
+[FORMATO DE SAÍDA — JSON]
+{
+  "overall": 0-5 (decimal),
+  "criteria": [
+    { "id": "coverage_diagnosis",        "score": 0-5 (decimal), "weight": 0.20, "evidence": "…", "comment": "…" },
+    { "id": "sensitive_field_assertions","score": 0-5 (decimal), "weight": 0.30, "evidence": "…", "comment": "…" },
+    { "id": "immutability_and_edge_cases","score": 0-5 (decimal), "weight": 0.25, "evidence": "…", "comment": "…" },
+    { "id": "bug_detection_reasoning",   "score": 0-5 (decimal), "weight": 0.15, "evidence": "…", "comment": "…" },
+    { "id": "line_vs_branch_coverage",   "score": 0-5 (decimal), "weight": 0.10, "evidence": "…", "comment": "…" }
+  ],
+  "feedback": "comentário geral focado na qualidade dos asserts, capacidade de detectar vazamento de dados sensíveis, cobertura de bordas, raciocínio sobre mutações e discussão crítica sobre line coverage"
+}

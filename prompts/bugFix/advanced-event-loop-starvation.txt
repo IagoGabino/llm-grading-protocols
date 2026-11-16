@@ -1,0 +1,48 @@
+Avalie a correção de BUG da resposta do aluno para a questão abaixo usando a rubrica fornecida.
+
+[QUESTÃO / ENUNCIADO]
+{{{enunciado}}}
+
+[RUBRICA DE AVALIAÇÃO]
+{{{rubrica}}}
+
+[PONTOS ESPERADOS NA RESPOSTA]
+{{{pontos_esperados}}}
+
+[RESPOSTA DO ALUNO]
+Código:
+{{{codigo}}}
+
+Justificativa:
+{{{raciocinio}}}
+
+[INSTRUÇÕES DE AVALIAÇÃO]
+- Atribua notas de 0 a 5 por critério (números decimais permitidos, ex.: 4.5).
+- Verifique explicitamente:
+  (1) O aluno identifica que o loop síncrono (map/for) bloqueia a thread principal mesmo dentro de um handler async — e não apenas diz "está lento".
+  (2) O aluno explica por que o servidor para de responder a outros requests (Event Loop monopolizado, sem pontos de await no caminho CPU-bound).
+  (3) O código implementado adota corretamente ao menos uma das abordagens válidas:
+      — Chunking: uso de setImmediate/setTimeout(resolve,0) em JS ou asyncio.sleep(0) em Python a cada N iterações, com await correto;
+      — Worker Threads / ProcessPoolExecutor: dados serializados corretamente, await do resultado na thread principal;
+      — Background Job: endpoint retorna 202 Accepted com jobId, processamento real ocorre fora do request handler.
+  (4) A função de cálculo financeiro (computeFinancialMetrics / compute_financial_metrics) é preservada integralmente — não removida, não substituída por stub.
+  (5) O aluno discute ao menos um trade-off real da abordagem escolhida (ex.: aumento do tempo total com chunking, overhead de serialização com workers, mudança de contrato síncrono→assíncrono com filas).
+- Penalize fortemente em "fix_viability" se:
+  — o aluno apenas adiciona async/await sem nenhum mecanismo de yield ou offload;
+  — o aluno remove ou esvazia a lógica de computeFinancialMetrics;
+  — o código proposto não compilaria/executaria na linguagem escolhida.
+- Penalize em "root_cause_identification" se o aluno não mencionar o Event Loop ou a natureza single-threaded do runtime.
+- Use "evidence" com trechos objetivos do código ou da justificativa do aluno.
+- Consistência: a soma ponderada dos critérios deve refletir a nota "overall".
+
+[FORMATO DE SAÍDA — JSON]
+{
+  "overall": 0-5 (decimal),
+  "criteria": [
+    { "id": "root_cause_identification", "score": 0-5 (decimal), "weight": 0.30, "evidence": "…", "comment": "…" },
+    { "id": "fix_viability",             "score": 0-5 (decimal), "weight": 0.40, "evidence": "…", "comment": "…" },
+    { "id": "tradeoff_justification",    "score": 0-5 (decimal), "weight": 0.20, "evidence": "…", "comment": "…" },
+    { "id": "code_correctness",          "score": 0-5 (decimal), "weight": 0.10, "evidence": "…", "comment": "…" }
+  ],
+  "feedback": "comentário geral conciso focado na profundidade técnica da análise do event loop e na correção arquitetural proposta"
+}

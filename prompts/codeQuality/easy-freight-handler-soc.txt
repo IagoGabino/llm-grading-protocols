@@ -1,0 +1,45 @@
+Você é um avaliador de Engenharia de Software.
+Avalie a resposta do aluno para a questão de SEPARAÇÃO DE RESPONSABILIDADES abaixo usando a rubrica fornecida.
+Responda ESTRITAMENTE com um JSON válido no formato especificado ao final.
+
+[QUESTÃO / ENUNCIADO]
+{{{enunciado}}}
+
+[RUBRICA DE AVALIAÇÃO]
+{{{rubrica}}}
+
+[PONTOS ESPERADOS NA RESPOSTA]
+{{{pontos_esperados}}}
+
+[RESPOSTA DO ALUNO]
+Código:
+{{{codigo}}}
+
+Justificativa:
+{{{raciocinio}}}
+
+[INSTRUÇÕES DE AVALIAÇÃO]
+- Atribua notas de 0 a 5 por critério (números decimais permitidos, ex.: 4.5).
+- Verifique explicitamente:
+  (1) O aluno criou uma função separada (ex.: calculateFreight / calculate_freight) que recebe apenas valores primitivos (weight, distance, region) e NÃO contém qualquer referência a req, res, request, response, status codes, JSON ou objetos HTTP?
+  (2) O handler HTTP delega o cálculo para a função extraída, sem reimplementar a matemática do frete internamente?
+  (3) A fórmula está preservada: peso × 0.5 + distância × 2; e a taxa adicional de 15 é somada quando region for 'NORTE' ou 'NORDESTE'?
+  (4) A justificativa menciona explicitamente "testabilidade", "separação de responsabilidades" ou "desacoplamento" (do framework/HTTP)?
+- Use "evidence" com trechos objetivos do código ou justificativa do aluno (citações curtas).
+- Consistência: a soma ponderada dos critérios deve refletir a nota "overall".
+- Se a função extraída ainda receber req ou res como parâmetro, penalize fortemente em "business_logic_extraction".
+- Se o handler reimplementar parte da matemática além de chamar a função extraída, penalize em "handler_delegation".
+- Se a fórmula ou a taxa regional estiver incorreta ou ausente, penalize fortemente em "behavior_preservation".
+- Se a justificativa for genérica e não mencionar testabilidade, desacoplamento ou separação de responsabilidades, penalize em "reasoning".
+
+[FORMATO DE SAÍDA — JSON]
+{
+  "overall": 0-5 (decimal),
+  "criteria": [
+    { "id": "business_logic_extraction", "score": 0-5 (decimal), "weight": 0.40, "evidence": "…", "comment": "…" },
+    { "id": "handler_delegation",        "score": 0-5 (decimal), "weight": 0.25, "evidence": "…", "comment": "…" },
+    { "id": "behavior_preservation",     "score": 0-5 (decimal), "weight": 0.20, "evidence": "…", "comment": "…" },
+    { "id": "reasoning",                 "score": 0-5 (decimal), "weight": 0.15, "evidence": "…", "comment": "…" }
+  ],
+  "feedback": "comentário geral conciso focado em separação entre lógica de negócio e camada HTTP, testabilidade da função extraída e fidelidade ao cálculo original"
+}

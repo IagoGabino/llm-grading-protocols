@@ -1,0 +1,46 @@
+Avalie a correção de BUG da resposta do aluno para a questão abaixo usando a rubrica fornecida.
+
+[QUESTÃO / ENUNCIADO]
+{{{enunciado}}}
+
+[RUBRICA DE AVALIAÇÃO]
+{{{rubrica}}}
+
+[PONTOS ESPERADOS NA RESPOSTA]
+{{{pontos_esperados}}}
+
+[RESPOSTA DO ALUNO]
+Código:
+{{{codigo}}}
+
+Justificativa:
+{{{raciocinio}}}
+
+[INSTRUÇÕES DE AVALIAÇÃO]
+- Atribua notas de 0 a 5 por critério (números decimais permitidos, ex.: 3.5).
+- Verifique explicitamente:
+  (1) Se o aluno identifica que o parsing de JSON sem try/catch dentro do loop é a causa raiz e explica que um único evento inválido interrompe todo o lote.
+  (2) Se o parsing de JSON é envolvido em bloco try/catch (JS/Java) ou try/except json.JSONDecodeError (Python) dentro do loop — não fora dele — e se o erro capturado é especificamente o de parsing (não catch genérico sem discriminação).
+  (3) Se o loop continua após o erro de parsing e se eventos válidos que viriam após o evento inválido também são incluídos em processed (não apenas os anteriores ao erro).
+  (4) Se cada evento inválido é registrado em errors com pelo menos eventId e uma mensagem ou motivo descritivo derivado da exceção — não apenas um contador ou boolean.
+  (5) Se a função retorna sempre o objeto { processed, errors } independentemente do conteúdo do lote, e se o aluno explica por que capturar somente o erro de parsing (e não todos os erros) é a decisão correta.
+- Use "evidence" com trechos objetivos do código (cite a construção try/catch, o tipo de exceção capturada, o append em errors, o continue/próxima iteração).
+- Consistência: a soma ponderada dos critérios deve refletir a nota "overall".
+- Se o aluno usa catch genérico sem discriminação (ex.: catch(e) sem verificar o tipo de erro), penalize moderadamente em "parsing_fix"; não zere se o comportamento externo estiver correto, mas o critério técnico não está totalmente atendido.
+- Se o aluno coloca o try/catch fora do loop (envolvendo todo o for), o bug não está corrigido: penalize fortemente em "parsing_fix" e em "partial_processing".
+- Se o aluno silencia o erro no catch (bloco vazio, sem registro em errors), penalize fortemente em "error_recording".
+- Se a função lança exceção para o chamador em qualquer cenário de parsing inválido, penalize fortemente em "partial_processing" e em "error_recording".
+- Não penalize soluções que usam lógica adicional válida (ex.: validar se metadata é string antes do parse), desde que o contrato de saída seja preservado.
+
+[FORMATO DE SAÍDA — JSON]
+{
+  "overall": 0-5 (decimal),
+  "criteria": [
+    { "id": "root_cause",        "score": 0-5 (decimal), "weight": 0.25, "evidence": "...", "comment": "..." },
+    { "id": "parsing_fix",       "score": 0-5 (decimal), "weight": 0.30, "evidence": "...", "comment": "..." },
+    { "id": "partial_processing","score": 0-5 (decimal), "weight": 0.20, "evidence": "...", "comment": "..." },
+    { "id": "error_recording",   "score": 0-5 (decimal), "weight": 0.15, "evidence": "...", "comment": "..." },
+    { "id": "explanation",       "score": 0-5 (decimal), "weight": 0.10, "evidence": "...", "comment": "..." }
+  ],
+  "feedback": "comentário geral conciso focado em isolamento de erro por item, preservação do processamento parcial e qualidade do registro de eventos inválidos"
+}

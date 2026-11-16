@@ -1,0 +1,447 @@
+questionSlug: intermediate-payment-service-testability
+
+answers:
+  - id: intermediate-payment-service-testability-strong
+    profile: strong
+    variant: complete_correct
+    language: javascript
+
+    code: |
+      // payment-service.js
+      export class PaymentService {
+        constructor(gateway, orderRepo) {
+          this.gateway = gateway;
+          this.orderRepo = orderRepo;
+        }
+
+        async processPayment(orderId, amount, cardToken) {
+          const charge = await this.gateway.charge({
+            amount,
+            currency: 'BRL',
+            source: cardToken,
+          });
+
+          if (charge.status === 'succeeded') {
+            await this.orderRepo.updateStatus(orderId, 'paid', charge.id);
+            return { success: true, chargeId: charge.id };
+          }
+
+          await this.orderRepo.updateStatus(orderId, 'payment_failed', null);
+          return { success: false, reason: charge.declineReason };
+        }
+      }
+
+      // payment-service.test.js
+      import { describe, it, expect, beforeEach, vi } from 'vitest';
+      import { PaymentService } from './payment-service.js';
+
+      describe('PaymentService', () => {
+        let gateway;
+        let orderRepo;
+        let svc;
+
+        beforeEach(() => {
+          gateway   = { charge: vi.fn() };
+          orderRepo = { updateStatus: vi.fn().mockResolvedValue(undefined) };
+          svc = new PaymentService(gateway, orderRepo);
+        });
+
+        describe('quando o gateway aprova a cobrança', () => {
+          it('encaminha os dados corretos ao gateway e persiste o pedido como paid', async () => {
+            gateway.charge.mockResolvedValue({ status: 'succeeded', id: 'ch_001' });
+
+            const result = await svc.processPayment('order-42', 7500, 'tok_visa');
+
+            expect(gateway.charge).toHaveBeenCalledWith({
+              amount: 7500,
+              currency: 'BRL',
+              source: 'tok_visa',
+            });
+            expect(orderRepo.updateStatus).toHaveBeenCalledWith('order-42', 'paid', 'ch_001');
+            expect(result).toEqual({ success: true, chargeId: 'ch_001' });
+          });
+        });
+
+        describe('quando o gateway recusa a cobrança', () => {
+          it('persiste o pedido como payment_failed e retorna o motivo de recusa', async () => {
+            gateway.charge.mockResolvedValue({
+              status: 'declined',
+              declineReason: 'card_expired',
+            });
+
+            const result = await svc.processPayment('order-43', 3000, 'tok_expired');
+
+            expect(gateway.charge).toHaveBeenCalledWith({
+              amount: 3000,
+              currency: 'BRL',
+              source: 'tok_expired',
+            });
+            expect(orderRepo.updateStatus).toHaveBeenCalledWith('order-43', 'payment_failed', null);
+            expect(result).toEqual({ success: false, reason: 'card_expired' });
+          });
+        });
+
+        describe('quando o gateway lança uma exceção técnica', () => {
+          it('propaga o erro sem chamar o repositório', async () => {
+            gateway.charge.mockRejectedValue(new Error('connection refused'));
+
+            await expect(
+              svc.processPayment('order-44', 1000, 'tok_err')
+            ).rejects.toThrow('connection refused');
+
+            expect(orderRepo.updateStatus).not.toHaveBeenCalled();
+          });
+        });
+      });
+
+    justification: |
+      Problema de testabilidade no código original:
+      O construtor chama new StripeGateway(...) e new OrderRepository(...) internamente,
+      consumindo variáveis de ambiente (STRIPE_SECRET_KEY, DATABASE_URL). Isso amarra
+      cada instância de PaymentService a implementações concretas que fazem I/O real.
+      Não existe ponto de extensão para substituir essas dependências sem recorrer a
+      monkey-patching de módulos — uma técnica frágil que acopla os testes à estrutura
+      interna do módulo.
+
+      Como a injeção de dependências resolve o problema:
+      Ao mover gateway e orderRepo para parâmetros do construtor, o PaymentService
+      passa a trabalhar com qualquer objeto que satisfaça as interfaces esperadas.
+      Nos testes, vi.fn() produz stubs completamente controlados: define-se o que
+      charge vai retornar, quando deve rejeitar, e quais chamadas ao repositório
+      se espera — sem nenhuma rede ou banco envolvido.
+
+      Por que verificar os argumentos enviados ao gateway:
+      Confirmar que gateway.charge recebe amount, currency: 'BRL' e source: cardToken
+      garante que o serviço monta o payload correto antes de enviar ao Stripe. Um teste
+      que verifica apenas o retorno pode passar mesmo que o payload esteja errado,
+      desde que o mock ignore os argumentos.
+
+      Por que orderRepo.updateStatus não deve ser chamado em caso de exceção técnica:
+      Se o gateway lança um erro antes de retornar, a lógica de persistência nunca
+      deve ser atingida. Chamar updateStatus nesse cenário produziria um estado
+      inconsistente no banco (ex.: pedido marcado como 'paid' sem cobrança confirmada
+      no Stripe). A asserção not.toHaveBeenCalled() impede que esse bug se esconda
+      atrás da propagação da exceção.
+
+    expectedOverall: 4.93
+    expectedCriteria:
+      - criterionId: dependency_isolation
+        expectedScore: 5.0
+        rationale: |
+          O construtor foi refatorado para receber gateway e orderRepo como parâmetros.
+          Mocks criados com vi.fn() no beforeEach são injetados diretamente via construtor.
+          Sem patch de módulo, sem variáveis de ambiente, sem serviços reais.
+
+      - criterionId: behavior_coverage
+        expectedScore: 5.0
+        rationale: |
+          Três cenários cobertos: (1) gateway retorna 'succeeded' → repositório chamado
+          com 'paid' e chargeId correto → retorno verificado; (2) gateway retorna 'declined'
+          → repositório chamado com 'payment_failed' e null → motivo de recusa verificado;
+          (3) gateway lança exceção → erro propagado. Nenhum cenário ausente.
+
+      - criterionId: assertion_precision
+        expectedScore: 5.0
+        rationale: |
+          Todos os testes verificam o retorno e os efeitos colaterais. Os dois cenários
+          de sucesso/recusa verificam os argumentos exatos passados a gateway.charge
+          (amount, currency: 'BRL', source) e a orderRepo.updateStatus. O cenário de
+          falha usa not.toHaveBeenCalled() para garantir que o repositório não foi tocado.
+          Cobertura de asserções completa.
+
+      - criterionId: test_structure
+        expectedScore: 4.5
+        rationale: |
+          beforeEach reseta os mocks antes de cada teste. Os testes são agrupados em
+          três describe internos por tipo de cenário, tornando a intenção imediata de
+          cada bloco clara. Nomes de teste descrevem o comportamento esperado, não apenas
+          o retorno. Penalização pequena porque os describe internos por cenário podem ser
+          considerados excessivos para uma suíte simples de três casos.
+
+    notes: |
+      expectedOverall = (5.0×0.35) + (5.0×0.30) + (5.0×0.20) + (4.5×0.15)
+                      = 1.75 + 1.50 + 1.00 + 0.675
+                      = 4.925 → arredondado para 4.93.
+
+  - id: intermediate-payment-service-testability-medium
+    profile: medium
+    variant: partial_correct
+    language: javascript
+
+    code: |
+      // payment-service.js
+      class PaymentService {
+        constructor(gateway, orderRepo) {
+          this.gateway = gateway;
+          this.orderRepo = orderRepo;
+        }
+
+        async processPayment(orderId, amount, cardToken) {
+          const charge = await this.gateway.charge({
+            amount,
+            currency: 'BRL',
+            source: cardToken,
+          });
+
+          if (charge.status === 'succeeded') {
+            await this.orderRepo.updateStatus(orderId, 'paid', charge.id);
+            return { success: true, chargeId: charge.id };
+          } else {
+            await this.orderRepo.updateStatus(orderId, 'payment_failed', null);
+            return { success: false, reason: charge.declineReason };
+          }
+        }
+      }
+
+      module.exports = { PaymentService };
+
+      // payment-service.test.js
+      const { describe, it, expect, beforeEach, vi } = require('vitest');
+      const { PaymentService } = require('./payment-service');
+
+      describe('PaymentService', () => {
+        let gateway;
+        let orderRepo;
+        let service;
+
+        beforeEach(() => {
+          gateway  = { charge: vi.fn() };
+          orderRepo = { updateStatus: vi.fn().mockResolvedValue(undefined) };
+          service  = new PaymentService(gateway, orderRepo);
+        });
+
+        it('retorna success true quando pagamento é aprovado', async () => {
+          gateway.charge.mockResolvedValue({ status: 'succeeded', id: 'ch_abc' });
+
+          const result = await service.processPayment('order-1', 5000, 'tok_visa');
+
+          expect(result.success).toBe(true);
+          expect(result.chargeId).toBe('ch_abc');
+          expect(orderRepo.updateStatus).toHaveBeenCalled();
+        });
+
+        it('retorna success false quando gateway declina', async () => {
+          gateway.charge.mockResolvedValue({
+            status: 'declined',
+            declineReason: 'insufficient_funds',
+          });
+
+          const result = await service.processPayment('order-2', 3000, 'tok_decline');
+
+          expect(result.success).toBe(false);
+          expect(result.reason).toBe('insufficient_funds');
+          expect(orderRepo.updateStatus).toHaveBeenCalled();
+        });
+
+        it('propaga exceção quando gateway falha', async () => {
+          gateway.charge.mockRejectedValue(new Error('Gateway timeout'));
+
+          await expect(
+            service.processPayment('order-3', 1000, 'tok_err')
+          ).rejects.toThrow('Gateway timeout');
+        });
+      });
+
+    justification: |
+      O código original não é testável porque as dependências são instanciadas
+      diretamente no construtor. Qualquer teste executaria chamadas reais ao Stripe
+      e ao banco. Refatorei o construtor para receber gateway e orderRepo como
+      parâmetros, permitindo passar mocks nos testes.
+
+      Os testes cobrem os três cenários: pagamento aprovado, recusado e falha técnica.
+      Os mocks são criados no beforeEach para garantir isolamento entre os testes.
+      A suíte verifica o retorno correto em cada caso.
+
+    expectedOverall: 3.85
+    expectedCriteria:
+      - criterionId: dependency_isolation
+        expectedScore: 5.0
+        rationale: |
+          O construtor foi corretamente refatorado para injeção de dependências.
+          Os mocks são criados no beforeEach e injetados via construtor. A refatoração
+          é estruturalmente correta e resolve o problema de testabilidade descrito
+          no enunciado.
+
+      - criterionId: behavior_coverage
+        expectedScore: 4.0
+        rationale: |
+          Os três cenários estão presentes: caminho feliz, recusa e falha técnica.
+          No entanto, a cobertura é superficial: o teste de caminho feliz verifica
+          apenas que updateStatus foi chamado (toHaveBeenCalled), sem verificar os
+          argumentos — não é possível saber se 'paid' e o chargeId correto foram
+          passados. O mesmo vale para o teste de recusa com 'payment_failed' e null.
+          Funcionalmente, os cenários existem, mas não cobrem todos os comportamentos
+          especificados.
+
+      - criterionId: assertion_precision
+        expectedScore: 1.5
+        rationale: |
+          Os testes de caminho feliz e recusa usam toHaveBeenCalled() sem verificar
+          os argumentos passados ao repositório — não confirmam 'paid'/'payment_failed',
+          o chargeId correto ou o null. O teste de falha técnica verifica que a exceção
+          é propagada, mas não possui asserção negativa (not.toHaveBeenCalled()) para
+          garantir que o repositório não foi chamado. As asserções cobrem apenas o
+          retorno da função, deixando descobertos os efeitos colaterais críticos.
+
+      - criterionId: test_structure
+        expectedScore: 4.0
+        rationale: |
+          beforeEach cria mocks e instancia o serviço corretamente. Os nomes dos
+          testes são razoavelmente descritivos. A organização com describe/it é
+          idiomática. Perde 1.0 porque o describe não especifica o método testado
+          (apenas 'PaymentService', não 'processPayment'), e os nomes dos testes
+          focam no retorno em vez de no comportamento completo (ex.: sem mencionar
+          o que acontece com o repositório).
+
+    notes: |
+      expectedOverall = (5.0×0.35) + (4.0×0.30) + (1.5×0.20) + (4.0×0.15)
+                      = 1.75 + 1.20 + 0.30 + 0.60
+                      = 3.85.
+
+  - id: intermediate-payment-service-testability-weak
+    profile: weak
+    variant: subtle_error
+    language: javascript
+
+    code: |
+      // payment-service.js — sem alteração no construtor
+      const { StripeGateway } = require('./stripe-gateway');
+      const { OrderRepository } = require('./order-repository');
+
+      class PaymentService {
+        constructor() {
+          this.gateway = new StripeGateway(process.env.STRIPE_SECRET_KEY);
+          this.orderRepo = new OrderRepository(process.env.DATABASE_URL);
+        }
+
+        async processPayment(orderId, amount, cardToken) {
+          const charge = await this.gateway.charge({
+            amount,
+            currency: 'BRL',
+            source: cardToken,
+          });
+
+          if (charge.status === 'succeeded') {
+            await this.orderRepo.updateStatus(orderId, 'paid', charge.id);
+            return { success: true, chargeId: charge.id };
+          } else {
+            await this.orderRepo.updateStatus(orderId, 'payment_failed', null);
+            return { success: false, reason: charge.declineReason };
+          }
+        }
+      }
+
+      module.exports = { PaymentService };
+
+      // payment-service.test.js
+      const { describe, it, expect, beforeEach, vi } = require('vitest');
+      const { PaymentService } = require('./payment-service');
+
+      describe('PaymentService', () => {
+        let service;
+        let mockCharge;
+        let mockUpdateStatus;
+
+        beforeEach(() => {
+          mockCharge = vi.fn();
+          mockUpdateStatus = vi.fn().mockResolvedValue(undefined);
+
+          service = new PaymentService();
+          // Substitui as dependências após instanciar (monkey-patching)
+          service.gateway = { charge: mockCharge };
+          service.orderRepo = { updateStatus: mockUpdateStatus };
+        });
+
+        it('retorna success true para pagamento aprovado', async () => {
+          mockCharge.mockResolvedValue({ status: 'succeeded', id: 'ch_abc' });
+
+          const result = await service.processPayment('order-1', 5000, 'tok_visa');
+
+          expect(result).toEqual({ success: true, chargeId: 'ch_abc' });
+        });
+
+        it('retorna success false para pagamento recusado', async () => {
+          mockCharge.mockResolvedValue({
+            status: 'declined',
+            declineReason: 'insufficient_funds',
+          });
+
+          const result = await service.processPayment('order-2', 3000, 'tok_decline');
+
+          expect(result).toEqual({ success: false, reason: 'insufficient_funds' });
+        });
+
+        it('propaga exceção quando gateway falha', async () => {
+          mockCharge.mockRejectedValue(new Error('Gateway timeout'));
+
+          await expect(
+            service.processPayment('order-3', 1000, 'tok_err')
+          ).rejects.toThrow('Gateway timeout');
+        });
+      });
+
+    justification: |
+      Para testar o PaymentService sem fazer chamadas reais, criei mocks para o
+      gateway e o repositório e os substituo na instância após a criação. Isso
+      permite controlar o comportamento das dependências sem precisar alterar o
+      construtor, já que JavaScript permite substituir propriedades de objetos
+      dinamicamente.
+
+      Os testes cobrem pagamento aprovado, recusado e falha técnica. Em cada caso,
+      configuro o mock do gateway para retornar o valor esperado e verifico que
+      o PaymentService retorna o resultado correto.
+
+      Isso melhora a testabilidade porque os testes não dependem de serviços externos
+      reais — os mocks controlam todas as respostas.
+
+    expectedOverall: 2.15
+    expectedCriteria:
+      - criterionId: dependency_isolation
+        expectedScore: 1.5
+        rationale: |
+          O construtor não foi refatorado: PaymentService ainda instancia StripeGateway
+          e OrderRepository internamente. A substituição é feita por monkey-patching
+          (service.gateway = { charge: mockCharge }) após a instância ser criada.
+          Isso falha no objetivo da questão: o construtor ainda tentaria instanciar
+          as dependências reais durante new PaymentService() — incluindo acessar
+          process.env e potencialmente falhar em CI sem as variáveis de ambiente.
+          A solução não é estrutural e não resolve o problema de testabilidade.
+
+      - criterionId: behavior_coverage
+        expectedScore: 3.0
+        rationale: |
+          Os três cenários estão presentes como teste: caminho feliz, recusa e falha
+          técnica. No entanto, a cobertura é superficial: nenhum teste verifica se
+          o repositório foi chamado com os argumentos corretos ('paid', chargeId,
+          'payment_failed', null). O comportamento do repositório — que é parte
+          central da especificação — está descoberto. A nota reflete que os cenários
+          existem mas não cobrem os comportamentos relevantes do enunciado.
+
+      - criterionId: assertion_precision
+        expectedScore: 1.0
+        rationale: |
+          Os três testes verificam apenas o retorno da função (result.success,
+          chargeId, reason). Nenhum teste verifica que orderRepo.updateStatus foi
+          chamado, com quais argumentos, ou que não foi chamado no caso de falha.
+          A asserção negativa (not.toHaveBeenCalled) está ausente. As asserções
+          cobrem apenas a superfície do comportamento — o efeito colateral crítico
+          (persistência correta no repositório) é completamente ignorado.
+
+      - criterionId: test_structure
+        expectedScore: 3.5
+        rationale: |
+          beforeEach cria os mocks e faz a substituição de forma organizada. Os nomes
+          dos testes são razoavelmente descritivos. A organização com describe/it é
+          presente. A penalização reflete que a estrutura parece correta superficialmente,
+          mas o beforeEach instancia o PaymentService real (chamando o construtor
+          problemático) antes de substituir as propriedades, o que não é um padrão
+          correto de setup para injeção de dependências.
+
+    notes: |
+      expectedOverall = (1.5×0.35) + (3.0×0.30) + (1.0×0.20) + (3.5×0.15)
+                      = 0.525 + 0.90 + 0.20 + 0.525
+                      = 2.15.
+      A resposta é weak: o construtor não foi refatorado (objetivo principal do
+      enunciado) e monkey-patching é apresentado como solução equivalente a DI.
+      As assertivas cobrem apenas o retorno da função, ignorando completamente
+      os efeitos colaterais no repositório.

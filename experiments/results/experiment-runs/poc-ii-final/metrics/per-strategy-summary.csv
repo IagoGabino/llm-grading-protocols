@@ -1,0 +1,4 @@
+strategy,plannedRuns,foundRuns,successRuns,successRate,overallMAE,overallMeanSignedError,criterionMAE,totalCallCount,avgCallCount,totalCostCredits,avgLatencyMs,maxLatencyMs
+single,24,24,24,1,0.2658,0.14,0.5143,24,1,0.0928855,7006.5833,14964
+review,24,24,24,1,0.3092,0.1067,0.519,48,2,0.1821893,12949.8333,18640
+multi_aggregate,24,24,24,1,0.255,0.0983,0.4538,72,3,0.2784707,20195.75,27104

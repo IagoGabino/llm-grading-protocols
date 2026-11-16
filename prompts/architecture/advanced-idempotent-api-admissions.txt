@@ -1,0 +1,56 @@
+Você é um avaliador de Engenharia de Software especializado em design de APIs REST e sistemas distribuídos.
+Avalie a resposta do aluno para a questão de DESIGN DE API IDEMPOTENTE abaixo usando a rubrica fornecida.
+Responda ESTRITAMENTE com um JSON válido no formato especificado ao final.
+
+[QUESTÃO / ENUNCIADO]
+{{{enunciado}}}
+
+[RUBRICA DE AVALIAÇÃO]
+{{{rubrica}}}
+
+[PONTOS ESPERADOS NA RESPOSTA]
+{{{pontos_esperados}}}
+
+[RESPOSTA DO ALUNO]
+## Contrato e Headers
+{{{contrato_headers}}}
+
+## Fluxo do Backend e Concorrência
+{{{fluxo_backend}}}
+
+## Trade-offs e Limitações
+{{{tradeoffs_limitacoes}}}
+
+[INSTRUÇÕES DE AVALIAÇÃO]
+- Atribua notas de 0 a 5 por critério (números decimais permitidos, ex.: 4.5).
+- Verifique explicitamente:
+
+  (1) O aluno introduz um mecanismo de identificação da transação independente dos atributos do domínio (ex.: não usa apenas patient_id + data para determinar duplicata).
+  (2) O header ou identificador escolhido é gerado pelo cliente (não pelo servidor), garantindo que retries carreguem o mesmo valor.
+  (3) Os status codes retornados são semanticamente corretos para cada cenário: 201 na primeira chamada; 200 ou 201 cacheado em retries após conclusão; 409 ou equivalente enquanto o request original ainda processa; 422 ou 400 para conflito de payload.
+  (4) O fluxo de backend inclui armazenamento explícito da chave com seu estado (ex.: processing, done) e a resposta serializada.
+  (5) O mecanismo de prevenção de race conditions é robusto: Redis SETNX, Unique Constraint com rollback, lock distribuído ou equivalente — não basta verificar a existência da chave sem garantia de atomicidade.
+  (6) A resposta original cacheada é retornada nas chamadas subsequentes sem criar novo registro no banco.
+  (7) O aluno define ou justifica um TTL para as chaves de idempotência.
+  (8) O aluno reconhece limitações da solução: reutilização acidental de chave, clientes não conformes, ou o que acontece após o TTL.
+
+- Use "evidence" com trechos objetivos da resposta do aluno.
+- Consistência: a soma ponderada dos critérios deve refletir a nota "overall".
+- Penalize fortemente em "backend_flow" se o aluno não abordar race conditions ou assumir que verificar a existência da chave sequencialmente é suficiente.
+- Uma solução do tipo "consultar se a chave existe; se não existir, criar a internação; depois salvar a chave" não é robusta contra concorrência e deve receber nota baixa em "backend_flow", a menos que esteja dentro de uma transação com constraint única/lock/SETNX ou mecanismo equivalente.
+- Penalize em "api_contract" se o aluno propuser que a unicidade seja verificada por atributos clínicos (patient_id + leito + data) sem um identificador de transação explícito.
+- Penalize em "http_status_codes" se o aluno usar 2xx genérico para todos os cenários ou ignorar o caso de conflito de payload.
+- Não penalize o aluno por não cobrir cenários explicitamente fora do escopo definido no enunciado.
+- Não trate como idempotência correta soluções baseadas principalmente em deduplicação por patient_id, leito, data, diagnóstico ou similaridade de payload; esses mecanismos podem ser heurísticas auxiliares, mas não substituem uma chave de transação gerada pelo cliente.
+
+[FORMATO DE SAÍDA — JSON]
+{
+  "overall": 0-5 (decimal),
+  "criteria": [
+    { "id": "api_contract",       "score": 0-5 (decimal), "weight": 0.30, "evidence": "…", "comment": "…" },
+    { "id": "backend_flow",       "score": 0-5 (decimal), "weight": 0.35, "evidence": "…", "comment": "…" },
+    { "id": "http_status_codes",  "score": 0-5 (decimal), "weight": 0.20, "evidence": "…", "comment": "…" },
+    { "id": "ttl_and_tradeoffs",  "score": 0-5 (decimal), "weight": 0.15, "evidence": "…", "comment": "…" }
+  ],
+  "feedback": "comentário geral focado na qualidade do contrato HTTP proposto, na robustez do mecanismo de concorrência e na consciência das limitações da solução"
+}

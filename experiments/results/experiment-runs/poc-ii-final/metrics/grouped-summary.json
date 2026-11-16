@@ -1,0 +1,245 @@
+{
+  "note": "Grouped summaries are exploratory and marked sparse when a group has fewer than 3 successful runs.",
+  "groups": [
+    {
+      "groupBy": "profile",
+      "groupValue": "medium",
+      "strategy": "single",
+      "successRuns": 8,
+      "overallMAE": 0.4425,
+      "sparse": false
+    },
+    {
+      "groupBy": "profile",
+      "groupValue": "medium",
+      "strategy": "review",
+      "successRuns": 8,
+      "overallMAE": 0.4413,
+      "sparse": false
+    },
+    {
+      "groupBy": "profile",
+      "groupValue": "medium",
+      "strategy": "multi_aggregate",
+      "successRuns": 8,
+      "overallMAE": 0.3875,
+      "sparse": false
+    },
+    {
+      "groupBy": "profile",
+      "groupValue": "misleading",
+      "strategy": "single",
+      "successRuns": 6,
+      "overallMAE": 0.32,
+      "sparse": false
+    },
+    {
+      "groupBy": "profile",
+      "groupValue": "misleading",
+      "strategy": "review",
+      "successRuns": 6,
+      "overallMAE": 0.37,
+      "sparse": false
+    },
+    {
+      "groupBy": "profile",
+      "groupValue": "misleading",
+      "strategy": "multi_aggregate",
+      "successRuns": 6,
+      "overallMAE": 0.3067,
+      "sparse": false
+    },
+    {
+      "groupBy": "profile",
+      "groupValue": "strong",
+      "strategy": "single",
+      "successRuns": 8,
+      "overallMAE": 0.0588,
+      "sparse": false
+    },
+    {
+      "groupBy": "profile",
+      "groupValue": "strong",
+      "strategy": "review",
+      "successRuns": 8,
+      "overallMAE": 0.0588,
+      "sparse": false
+    },
+    {
+      "groupBy": "profile",
+      "groupValue": "strong",
+      "strategy": "multi_aggregate",
+      "successRuns": 8,
+      "overallMAE": 0.0812,
+      "sparse": false
+    },
+    {
+      "groupBy": "profile",
+      "groupValue": "weak",
+      "strategy": "single",
+      "successRuns": 2,
+      "overallMAE": 0.225,
+      "sparse": true
+    },
+    {
+      "groupBy": "profile",
+      "groupValue": "weak",
+      "strategy": "review",
+      "successRuns": 2,
+      "overallMAE": 0.6,
+      "sparse": true
+    },
+    {
+      "groupBy": "profile",
+      "groupValue": "weak",
+      "strategy": "multi_aggregate",
+      "successRuns": 2,
+      "overallMAE": 0.265,
+      "sparse": true
+    },
+    {
+      "groupBy": "axis",
+      "groupValue": "architecture",
+      "strategy": "single",
+      "successRuns": 6,
+      "overallMAE": 0.3433,
+      "sparse": false
+    },
+    {
+      "groupBy": "axis",
+      "groupValue": "architecture",
+      "strategy": "review",
+      "successRuns": 6,
+      "overallMAE": 0.3933,
+      "sparse": false
+    },
+    {
+      "groupBy": "axis",
+      "groupValue": "architecture",
+      "strategy": "multi_aggregate",
+      "successRuns": 6,
+      "overallMAE": 0.2867,
+      "sparse": false
+    },
+    {
+      "groupBy": "axis",
+      "groupValue": "codeQuality",
+      "strategy": "single",
+      "successRuns": 6,
+      "overallMAE": 0.1333,
+      "sparse": false
+    },
+    {
+      "groupBy": "axis",
+      "groupValue": "codeQuality",
+      "strategy": "review",
+      "successRuns": 6,
+      "overallMAE": 0.2283,
+      "sparse": false
+    },
+    {
+      "groupBy": "axis",
+      "groupValue": "codeQuality",
+      "strategy": "multi_aggregate",
+      "successRuns": 6,
+      "overallMAE": 0.185,
+      "sparse": false
+    },
+    {
+      "groupBy": "axis",
+      "groupValue": "bugFix",
+      "strategy": "single",
+      "successRuns": 6,
+      "overallMAE": 0.235,
+      "sparse": false
+    },
+    {
+      "groupBy": "axis",
+      "groupValue": "bugFix",
+      "strategy": "review",
+      "successRuns": 6,
+      "overallMAE": 0.1517,
+      "sparse": false
+    },
+    {
+      "groupBy": "axis",
+      "groupValue": "bugFix",
+      "strategy": "multi_aggregate",
+      "successRuns": 6,
+      "overallMAE": 0.225,
+      "sparse": false
+    },
+    {
+      "groupBy": "axis",
+      "groupValue": "tests",
+      "strategy": "single",
+      "successRuns": 6,
+      "overallMAE": 0.3517,
+      "sparse": false
+    },
+    {
+      "groupBy": "axis",
+      "groupValue": "tests",
+      "strategy": "review",
+      "successRuns": 6,
+      "overallMAE": 0.4633,
+      "sparse": false
+    },
+    {
+      "groupBy": "axis",
+      "groupValue": "tests",
+      "strategy": "multi_aggregate",
+      "successRuns": 6,
+      "overallMAE": 0.3233,
+      "sparse": false
+    },
+    {
+      "groupBy": "difficulty",
+      "groupValue": "advanced",
+      "strategy": "single",
+      "successRuns": 6,
+      "overallMAE": 0.3433,
+      "sparse": false
+    },
+    {
+      "groupBy": "difficulty",
+      "groupValue": "advanced",
+      "strategy": "review",
+      "successRuns": 6,
+      "overallMAE": 0.3933,
+      "sparse": false
+    },
+    {
+      "groupBy": "difficulty",
+      "groupValue": "advanced",
+      "strategy": "multi_aggregate",
+      "successRuns": 6,
+      "overallMAE": 0.2867,
+      "sparse": false
+    },
+    {
+      "groupBy": "difficulty",
+      "groupValue": "intermediate",
+      "strategy": "single",
+      "successRuns": 18,
+      "overallMAE": 0.24,
+      "sparse": false
+    },
+    {
+      "groupBy": "difficulty",
+      "groupValue": "intermediate",
+      "strategy": "review",
+      "successRuns": 18,
+      "overallMAE": 0.2811,
+      "sparse": false
+    },
+    {
+      "groupBy": "difficulty",
+      "groupValue": "intermediate",
+      "strategy": "multi_aggregate",
+      "successRuns": 18,
+      "overallMAE": 0.2444,
+      "sparse": false
+    }
+  ]
+}

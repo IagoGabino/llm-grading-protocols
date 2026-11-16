@@ -1,0 +1,24 @@
+{
+  "runId": "review-v3-balanced__intermediate-n-plus-one-queries__intermediate-n-plus-one-queries-medium__9a9f4e5fae",
+  "rawOutputs": [
+    {
+      "output": "{\n  \"overall\": 3.75,\n  \"criteria\": [\n    {\n      \"id\": \"root_cause\",\n      \"score\": 5,\n      \"weight\": 0.25,\n      \"evidence\": [\n        \"O problema do código original é que ele executa uma query de banco de dados dentro do loop, o que gera N queries adicionais para N faturas — somando N+1 ao total. Isso é lento porque cada query tem latência de rede e disco.\"\n      ],\n      \"comment\": \"A avaliação inicial está correta. O aluno identificou claramente a causa raiz do problema N+1 e explicou o impacto na performance, alinhando-se perfeitamente com a rubrica.\"\n    },\n    {\n      \"id\": \"batching_fix\",\n      \"score\": 5,\n      \"weight\": 0.35,\n      \"evidence\": [\n        \"const customerIds = invoices.map(i => i.customer_id);\",\n        \"const uniqueIds = [...new Set(customerIds)];\",\n        \"if (uniqueIds.length === 0) { return invoices; }\",\n        \"const placeholders = uniqueIds.map(() => '?').join(', ');\",\n        \"const customers = await db.query(`SELECT * FROM customers WHERE id IN (${placeholders})`, uniqueIds);\"\n      ],\n      \"comment\": \"A avaliação inicial está correta. O aluno implementou o batching de forma exemplar, extraindo IDs únicos e usando uma única query com IN, incluindo o tratamento para o caso de lista vazia de IDs. Isso atende plenamente aos requisitos da rubrica.\"\n    },\n    {\n      \"id\": \"memory_join\",\n      \"score\": 0,\n      \"weight\": 0.25,\n      \"evidence\": [\n        \"for (const invoice of invoices) { invoice.customer = customers.find(c => c.id === invoice.customer_id) || null; }\"\n      ],\n      \"comment\": \"A avaliação inicial está correta. A rubrica exige associação em memória com complexidade O(N) usando um dicionário/mapa. A solução do aluno utiliza `customers.find()` dentro de um loop, o que resulta em complexidade O(N*M) (onde M é o número de clientes), que no pior caso pode ser O(N^2) se M for próximo de N. Isso é uma falha direta em relação ao requisito de complexidade O(N) e ao uso de mapa/dicionário.\"\n    },\n    {\n      \"id\": \"contract_preservation\",\n      \"score\": 5,\n      \"weight\": 0.15,\n      \"evidence\": [\n        \"invoice.customer = customers.find(c => c.id === invoice.customer_id) || null;\",\n        \"return invoices;\"\n      ],\n      \"comment\": \"A avaliação inicial está correta. A função retorna uma lista de faturas com a propriedade `customer` preenchida, mantendo o formato esperado e a assinatura pública. Isso cumpre integralmente o critério.\"\n    }\n  ],\n  \"feedback\": \"A solução do aluno identificou corretamente a causa raiz do problema N+1 e implementou o batching de queries de forma eficaz, reduzindo as chamadas ao banco de dados para 2. No entanto, a associação em memória dos clientes às faturas foi feita com `customers.find()` dentro de um loop, o que leva a uma complexidade O(N*M) (potencialmente O(N²)) em vez do O(N) esperado com o uso de um mapa/dicionário. Para melhorar, o aluno deveria ter construído um mapa de `customer_id` para `customer` e usado esse mapa para atribuir o cliente a cada fatura em O(1) por lookup, garantindo a complexidade O(N) para a associação em memória.\"\n}",
+      "model": "google/gemini-2.5-flash",
+      "callIndex": 1,
+      "metadata": {
+        "phase": "review_v3_balanced",
+        "promptVariant": "review-v3-balanced-calibration",
+        "usage": {
+          "promptTokens": 3084,
+          "completionTokens": 866,
+          "totalTokens": 3950,
+          "reasoningTokens": 0,
+          "cachedTokens": 0,
+          "cacheWriteTokens": 0,
+          "costCredits": 0.0030902,
+          "upstreamInferenceCost": 0.0030902
+        }
+      }
+    }
+  ]
+}

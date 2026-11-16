@@ -1,0 +1,68 @@
+{
+  "runId": "multi-aggregate__intermediate-feature-flag-isolation__intermediate-feature-flag-isolation-misleading__8479fee879",
+  "rawOutputs": [
+    {
+      "output": "{\n  \"overall\": 2.0,\n  \"criteria\": [\n    {\n      \"id\": \"root_cause_diagnosis\",\n      \"score\": 4.0,\n      \"weight\": 0.3,\n      \"evidence\": [\n        \"O problema é causado pelo estado compartilhado do FeatureFlagManager: como é um Singleton, a mesma instância é usada por todos os testes.\",\n        \"O Test A seta NEW_UI para true e não limpa o estado, então quando Test B roda em seguida, encontra o valor modificado por Test A.\"\n      ],\n      \"comment\": \"O aluno identificou corretamente o estado compartilhado e o padrão Singleton como a causa raiz do problema, explicando como o Test A contamina o Test B.\"\n    },\n    {\n      \"id\": \"teardown_implementation\",\n      \"score\": 1.0,\n      \"weight\": 0.35,\n      \"evidence\": [\n        \"featureFlags.reset(); // limpa o estado ao final do teste\"\n      ],\n      \"comment\": \"O aluno implementou a chamada `featureFlags.reset()` diretamente dentro do `test` do Test A, e não em um hook de ciclo de vida (`afterEach` ou `beforeEach`). Embora isso resolva o problema para a ordem A -> B, não é a solução idiomática e robusta esperada para gerenciamento de estado em suítes de teste.\"\n    },\n    {\n      \"id\": \"determinism\",\n      \"score\": 1.0,\n      \"weight\": 0.25,\n      \"evidence\": [\n        \"A solução é chamar featureFlags.reset() ao final do Test A, logo depois das assertions. Dessa forma, o estado fica limpo para o próximo teste. O Test B sempre encontrará NEW_UI como false porque o Test A faz a limpeza antes de terminar.\"\n      ],\n      \"comment\": \"A solução proposta pelo aluno (resetar dentro do Test A) garante que o Test B passe se executado após o Test A. No entanto, se o Test B fosse executado antes do Test A, ou se houvesse um Test C que dependesse de um estado limpo e fosse executado antes do Test A, ele ainda poderia falhar. A solução não garante o determinismo para *qualquer* ordem de execução, pois o reset não é aplicado universalmente a cada teste, mas apenas ao Test A.\"\n    },\n    {\n      \"id\": \"conceptual_justification\",\n      \"score\": 3.0,\n      \"weight\": 0.1,\n      \"evidence\": [\n        \"Isso resolve o Flaky Test porque o estado do Singleton é explicitamente restaurado pelo teste que o modifica, seguindo o princípio de que cada teste deve deixar o ambiente como encontrou.\"\n      ],\n      \"comment\": \"O aluno menciona o princípio de que 'cada teste deve deixar o ambiente como encontrou', o que se alinha com o isolamento de testes. No entanto, a justificativa não articula por que um hook de ciclo de vida seria superior ou como ele garante o isolamento de forma mais robusta do que a solução implementada.\"\n    }\n  ],\n  \"feedback\": \"Sua análise da causa raiz do Flaky Test, identificando o estado compartilhado do Singleton, foi precisa e bem articulada. No entanto, a implementação da solução não utilizou o mecanismo de limpeza de estado mais adequado do framework de testes (Jest). Ao invés de chamar `featureFlags.reset()` diretamente dentro do `test` do Test A, a prática recomendada é usar um hook de ciclo de vida como `afterEach` (ou `beforeEach`). Isso garantiria que o estado do `FeatureFlagManager` fosse resetado antes ou depois *de cada teste*, assegurando que todos os testes começassem de um estado limpo e fossem verdadeiramente independentes da ordem de execução. A solução atual, embora resolva o caso específico Test A -> Test B, não garante o determinismo para todas as possíveis ordens de execução ou para outros testes que possam ser adicionados à suíte. Reforçar o uso de hooks de ciclo de vida é crucial para manter a robustez e a manutenibilidade da suíte de testes.\"\n}",
+      "model": "google/gemini-2.5-flash",
+      "callIndex": 1,
+      "metadata": {
+        "engineStatus": "success",
+        "usage": {
+          "promptTokens": 2410,
+          "completionTokens": 920,
+          "totalTokens": 3330,
+          "reasoningTokens": 0,
+          "cachedTokens": 0,
+          "cacheWriteTokens": 0,
+          "costCredits": 0.003023,
+          "upstreamInferenceCost": 0.003023
+        },
+        "subcallIndex": 1,
+        "promptVariantId": "rubric_adherence",
+        "promptVariantInstruction": "Nesta avaliação, priorize a aderência estrita à rubrica. Atribua os scores considerando cuidadosamente os critérios, descritores e pesos definidos. Penalize respostas que pareçam boas de forma geral, mas que não atendam explicitamente ao que o critério avalia. Não use critérios externos à rubrica."
+      }
+    },
+    {
+      "output": "{\n  \"overall\": 2.0,\n  \"criteria\": [\n    {\n      \"id\": \"root_cause_diagnosis\",\n      \"score\": 4.0,\n      \"weight\": 0.3,\n      \"evidence\": [\n        \"O problema é causado pelo estado compartilhado do FeatureFlagManager: como é um Singleton, a mesma instância é usada por todos os testes.\",\n        \"O Test A seta NEW_UI para true e não limpa o estado, então quando Test B roda em seguida, encontra o valor modificado por Test A.\"\n      ],\n      \"comment\": \"O aluno identificou corretamente o estado compartilhado e o padrão Singleton como a causa raiz do problema, explicando como o Test A contamina o Test B.\"\n    },\n    {\n      \"id\": \"teardown_implementation\",\n      \"score\": 1.0,\n      \"weight\": 0.35,\n      \"evidence\": [\n        \"featureFlags.reset(); // limpa o estado ao final do teste\"\n      ],\n      \"comment\": \"O aluno implementou a chamada `featureFlags.reset()` diretamente dentro do `test` do Test A, e não em um hook de ciclo de vida (`afterEach` ou `beforeEach`). Embora resolva o problema para a ordem A -> B, não é a solução idiomática e robusta esperada para o framework de testes, que é usar um hook para garantir que todos os testes sejam isolados.\"\n    },\n    {\n      \"id\": \"determinism\",\n      \"score\": 1.0,\n      \"weight\": 0.25,\n      \"evidence\": [\n        \"A solução é chamar featureFlags.reset() ao final do Test A, logo depois das assertions. Dessa forma, o estado fica limpo para o próximo teste. O Test B sempre encontrará NEW_UI como false porque o Test A faz a limpeza antes de terminar.\"\n      ],\n      \"comment\": \"A solução proposta pelo aluno (resetar dentro do Test A) garante que o Test B passe se executado após o Test A. No entanto, se o Test B fosse executado antes do Test A, ou se houvesse um Test C que também modificasse o estado, a solução não seria robusta. A dependência ainda existe, mas foi 'resolvida' para um caso específico. Não garante determinismo para qualquer ordem de execução ou para outros testes que possam ser adicionados.\"\n    },\n    {\n      \"id\": \"conceptual_justification\",\n      \"score\": 3.0,\n      \"weight\": 0.1,\n      \"evidence\": [\n        \"Isso resolve o Flaky Test porque o estado do Singleton é explicitamente restaurado pelo teste que o modifica, seguindo o princípio de que cada teste deve deixar o ambiente como encontrou.\"\n      ],\n      \"comment\": \"O aluno menciona o princípio de que 'cada teste deve deixar o ambiente como encontrou', o que está alinhado com o isolamento de testes. No entanto, a justificativa não aborda por que um hook de ciclo de vida seria superior à solução implementada, que é mais frágil.\"\n    }\n  ],\n  \"feedback\": \"Sua análise da causa raiz do Flaky Test foi muito boa, identificando corretamente o estado compartilhado do Singleton como o problema. No entanto, a implementação da solução poderia ser mais robusta. Embora você tenha adicionado o `reset()` ao final do Test A, a prática recomendada em frameworks de teste como o Jest é usar hooks de ciclo de vida (como `afterEach` ou `beforeEach`) para garantir que o estado seja limpo de forma consistente para *todos* os testes, independentemente de qual teste o modificou. Isso assegura que cada teste comece em um estado conhecido e limpo, garantindo o determinismo e a independência da ordem de execução para toda a suíte, não apenas para um par específico de testes. Considere explorar o uso de `beforeEach` ou `afterEach` para gerenciar o estado compartilhado em seus testes futuros.\"\n}",
+      "model": "google/gemini-2.5-flash",
+      "callIndex": 2,
+      "metadata": {
+        "engineStatus": "success",
+        "usage": {
+          "promptTokens": 2404,
+          "completionTokens": 880,
+          "totalTokens": 3284,
+          "reasoningTokens": 0,
+          "cachedTokens": 0,
+          "cacheWriteTokens": 0,
+          "costCredits": 0.0029212,
+          "upstreamInferenceCost": 0.0029212
+        },
+        "subcallIndex": 2,
+        "promptVariantId": "textual_evidence",
+        "promptVariantInstruction": "Nesta avaliação, priorize evidências textuais presentes na resposta avaliada. Ao atribuir os scores, considere principalmente o que está explicitamente demonstrado no texto. Evite inferir conhecimento implícito quando ele não estiver sustentado por trechos, argumentos, exemplos ou explicações presentes na resposta."
+      }
+    },
+    {
+      "output": "{\n  \"overall\": 2.0,\n  \"criteria\": [\n    {\n      \"id\": \"root_cause_diagnosis\",\n      \"score\": 4.0,\n      \"weight\": 0.3,\n      \"evidence\": [\n        \"O problema é causado pelo estado compartilhado do FeatureFlagManager: como é um Singleton, a mesma instância é usada por todos os testes.\",\n        \"O Test A seta NEW_UI para true e não limpa o estado, então quando Test B roda em seguida, encontra o valor modificado por Test A.\"\n      ],\n      \"comment\": \"O aluno identificou corretamente o estado compartilhado e o padrão Singleton como a causa raiz do problema, explicando como o Test A contamina o Test B.\"\n    },\n    {\n      \"id\": \"teardown_implementation\",\n      \"score\": 1.0,\n      \"weight\": 0.35,\n      \"evidence\": [\n        \"featureFlags.reset(); // limpa o estado ao final do teste\"\n      ],\n      \"comment\": \"O aluno implementou a chamada `featureFlags.reset()` diretamente dentro do `test` do Test A, e não em um hook de ciclo de vida (`afterEach` ou `beforeEach`). Embora resolva o problema para a ordem A -> B, não é a solução idiomática e escalável para suítes de teste, e não garante que todos os testes comecem de um estado limpo sem duplicação de código.\"\n    },\n    {\n      \"id\": \"determinism\",\n      \"score\": 1.5,\n      \"weight\": 0.25,\n      \"evidence\": [\n        \"A solução é chamar featureFlags.reset() ao final do Test A, logo depois das assertions. Dessa forma, o estado fica limpo para o próximo teste. O Test B sempre encontrará NEW_UI como false porque o Test A faz a limpeza antes de terminar.\"\n      ],\n      \"comment\": \"A solução proposta pelo aluno garante o determinismo apenas na ordem Test A -> Test B. Se o Test B fosse executado antes do Test A, ou se houvesse um Test C que também modificasse o estado e não chamasse `reset()`, o problema de flaky test persistiria. A solução não garante que *todos* os testes comecem de um estado limpo, apenas que o Test A limpa o que ele mesmo sujou.\"\n    },\n    {\n      \"id\": \"conceptual_justification\",\n      \"score\": 3.0,\n      \"weight\": 0.1,\n      \"evidence\": [\n        \"Isso resolve o Flaky Test porque o estado do Singleton é explicitamente restaurado pelo teste que o modifica, seguindo o princípio de que cada teste deve deixar o ambiente como encontrou.\"\n      ],\n      \"comment\": \"O aluno menciona o princípio de que 'cada teste deve deixar o ambiente como encontrou', o que está alinhado com o isolamento de testes. No entanto, a justificativa não aborda o uso de hooks de framework, pois a solução implementada não os utiliza.\"\n    }\n  ],\n  \"feedback\": \"O aluno demonstrou um bom entendimento da causa raiz do Flaky Test, identificando corretamente o problema do estado compartilhado em um Singleton. Contudo, a implementação da solução não utilizou o mecanismo adequado de limpeza de estado do framework (hooks como `afterEach` ou `beforeEach`). A chamada `featureFlags.reset()` foi colocada diretamente dentro do corpo do Test A. Embora isso resolva o problema para a sequência específica Test A -> Test B, não é uma solução robusta e escalável que garanta o isolamento de todos os testes na suíte, independentemente da ordem de execução. Para melhorar, o ideal seria usar um `afterEach` para garantir que o `FeatureFlagManager` seja resetado após *cada* teste, assegurando que cada teste comece de um estado limpo e que a ordem de execução não afete o resultado.\"\n}",
+      "model": "google/gemini-2.5-flash",
+      "callIndex": 3,
+      "metadata": {
+        "engineStatus": "success",
+        "usage": {
+          "promptTokens": 2406,
+          "completionTokens": 871,
+          "totalTokens": 3277,
+          "reasoningTokens": 0,
+          "cachedTokens": 0,
+          "cacheWriteTokens": 0,
+          "costCredits": 0.0028993,
+          "upstreamInferenceCost": 0.0028993
+        },
+        "subcallIndex": 3,
+        "promptVariantId": "conceptual_coverage",
+        "promptVariantInstruction": "Nesta avaliação, priorize a cobertura conceitual da resposta. Verifique se os conceitos centrais esperados foram abordados de maneira correta e suficiente, mesmo que a organização, redação ou terminologia não sejam ideais. Penalize omissões conceituais relevantes e confusões entre conceitos importantes."
+      }
+    }
+  ]
+}

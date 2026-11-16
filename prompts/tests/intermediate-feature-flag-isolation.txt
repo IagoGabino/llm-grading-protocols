@@ -1,0 +1,43 @@
+Você é um avaliador de Engenharia de Software especializado em qualidade e design de testes.
+Avalie a REFATORAÇÃO DA SUÍTE DE TESTES da resposta do aluno para a questão abaixo usando a rubrica fornecida.
+Responda ESTRITAMENTE com um JSON válido no formato especificado ao final.
+
+[QUESTÃO / ENUNCIADO]
+{{{enunciado}}}
+
+[RUBRICA DE AVALIAÇÃO]
+{{{rubrica}}}
+
+[PONTOS ESPERADOS NA RESPOSTA]
+{{{pontos_esperados}}}
+
+[RESPOSTA DO ALUNO]
+Código:
+{{{codigo}}}
+
+Justificativa:
+{{{raciocinio}}}
+
+[INSTRUÇÕES DE AVALIAÇÃO]
+- Atribua notas de 0 a 5 por critério (números decimais permitidos, ex.: 3.5).
+- Verifique explicitamente:
+  (1) O aluno identificou o vazamento de estado (Shared State / Singleton sem cleanup) como causa raiz dos Flaky Tests — penalize em "root_cause_diagnosis" se apenas disser "o teste falha" sem explicar o motivo.
+  (2) O aluno introduziu um hook de ciclo de vida correto: afterEach/tearDown/@AfterEach (ou beforeEach/setUp/@BeforeEach como alternativa) que invoca reset() ou equivalente — penalize em "teardown_implementation" se o reset estiver fora do hook ou ausente.
+  (3) A suíte corrigida é determinística: ambos os testes passam independentemente da ordem de execução — penalize em "determinism" se o aluno só garantir a ordem Test A → Test B mas não a inversa.
+  (4) A justificativa articula o princípio de Test Isolation e por que o hook escolhido o garante — penalize em "conceptual_justification" se a explicação for superficial ou ausente.
+- Use "evidence" com trechos objetivos do código ou da justificativa do aluno.
+- Consistência: a soma ponderada dos critérios deve refletir a nota "overall".
+- Se o aluno modificar a classe FeatureFlagManager em vez de apenas o arquivo de testes, não penalize diretamente, mas verifique se a solução ainda satisfaz o isolamento exigido.
+- Se a justificativa estiver ausente ou vazia, atribua 0 em "conceptual_justification".
+
+[FORMATO DE SAÍDA — JSON]
+{
+  "overall": 0-5 (decimal),
+  "criteria": [
+    { "id": "root_cause_diagnosis",    "score": 0-5 (decimal), "weight": 0.30, "evidence": "…", "comment": "…" },
+    { "id": "teardown_implementation", "score": 0-5 (decimal), "weight": 0.35, "evidence": "…", "comment": "…" },
+    { "id": "determinism",             "score": 0-5 (decimal), "weight": 0.25, "evidence": "…", "comment": "…" },
+    { "id": "conceptual_justification","score": 0-5 (decimal), "weight": 0.10, "evidence": "…", "comment": "…" }
+  ],
+  "feedback": "comentário geral focado em isolamento de testes, uso correto dos hooks de ciclo de vida e clareza do diagnóstico"
+}

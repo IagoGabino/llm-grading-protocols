@@ -1,0 +1,342 @@
+questionSlug: intermediate-csv-user-import-modularity
+
+answers:
+  - id: intermediate-csv-user-import-modularity-strong
+    profile: strong
+    variant: complete_correct
+    language: javascript
+
+    code: |
+      // userImporter.js
+
+      function parseRow(row) {
+        return {
+          nome:  (row.nome  || '').trim(),
+          email: (row.email || '').trim(),
+          idade: row.idade,
+          plano: (row.plano || '').trim(),
+        };
+      }
+
+      function validateFields(parsed) {
+        const missingFields = [];
+        if (!parsed.nome)  missingFields.push('nome');
+        if (!parsed.email) missingFields.push('email');
+        return missingFields;
+      }
+
+      function normalizeFields(parsed) {
+        const idade = parseInt(parsed.idade, 10);
+        return {
+          nome:  parsed.nome,
+          email: parsed.email.toLowerCase(),
+          idade: isNaN(idade) ? 0 : idade,
+          plano: parsed.plano.toUpperCase() || 'FREE',
+        };
+      }
+
+      function importUsers(rawRows) {
+        const valid  = [];
+        const errors = [];
+
+        for (let i = 0; i < rawRows.length; i++) {
+          const lineNumber = i + 1;
+          const parsed      = parseRow(rawRows[i]);
+          const missing     = validateFields(parsed);
+
+          if (missing.length > 0) {
+            errors.push({ line: lineNumber, missingFields: missing });
+            continue;
+          }
+
+          valid.push(normalizeFields(parsed));
+        }
+
+        return { valid, errors };
+      }
+
+      module.exports = { importUsers };
+
+    justification: |
+      A refatoração separa as responsabilidades identificadas no código original:
+      (1) parseRow extrai e limpa os campos brutos sem qualquer lógica de negócio;
+      (2) validateFields verifica apenas obrigatoriedade de nome e email, retornando a lista
+          de campos ausentes sem efeito colateral;
+      (3) normalizeFields aplica todas as regras de normalização — email em lowercase, plano
+          em uppercase com fallback 'FREE', e idade com parseInt + fallback 0 para NaN;
+      (4) importUsers torna-se um orquestrador fino que coordena as etapas, acumula erros
+          e monta { valid, errors }.
+
+      Cada função recebe apenas os dados de que precisa e retorna um valor — nenhuma lê ou
+      escreve estado externo. Isso torna cada etapa testável de forma independente:
+      parseRow pode ser testado com objetos brutos, validateFields com objetos já limpos, e
+      normalizeFields com registros válidos sem precisar passar por todo o pipeline.
+      O comportamento do código original é preservado integralmente.
+
+    expectedOverall: 4.95
+    expectedCriteria:
+      - criterionId: responsibility_identification
+        expectedScore: 5.0
+        rationale: |
+          A justificativa nomeia explicitamente todas as responsabilidades acumuladas
+          no código original: parsing, validação de obrigatoriedade, normalização (com
+          as três sub-regras), acumulação de erros e montagem do resultado. Nada fica
+          implícito ou combinado.
+
+      - criterionId: function_extraction
+        expectedScore: 5.0
+        rationale: |
+          parseRow lida exclusivamente com extração e limpeza dos campos brutos;
+          validateFields verifica apenas obrigatoriedade; normalizeFields aplica apenas
+          as regras de normalização. Nenhuma função acumula mais de uma das
+          responsabilidades listadas. importUsers atua como orquestrador thin sem
+          lógica inline de parsing, validação ou normalização.
+
+      - criterionId: behavior_preservation
+        expectedScore: 5.0
+        rationale: |
+          email em lowercase (email.toLowerCase()), plano em uppercase com fallback
+          'FREE' (toUpperCase() || 'FREE'), idade com parseInt + isNaN fallback 0,
+          errors com { line, missingFields } onde line é 1-based, e resultado final
+          { valid, errors } — todas as regras do enunciado preservadas sem desvio.
+          A lógica do fallback de plano é semanticamente equivalente à original.
+
+      - criterionId: coupling_reduction
+        expectedScore: 5.0
+        rationale: |
+          Cada função recebe seus dados por parâmetro e retorna um valor sem ler nem
+          escrever nenhuma variável de escopo externo. parseRow, validateFields e
+          normalizeFields não dependem umas das outras e não compartilham estado.
+
+      - criterionId: reasoning
+        expectedScore: 4.5
+        rationale: |
+          A justificativa explica quais responsabilidades foram separadas, por que
+          cada função extraída é coesa e como a separação melhora testabilidade sem
+          alterar comportamento. Poderia ser ligeiramente mais explícita sobre
+          trade-offs de legibilidade, mas atende bem ao critério.
+
+    notes: |
+      expectedOverall = (5.0×0.20) + (5.0×0.35) + (5.0×0.25) + (5.0×0.10) + (4.5×0.10)
+                      = 1.00 + 1.75 + 1.25 + 0.50 + 0.45
+                      = 4.95.
+
+  - id: intermediate-csv-user-import-modularity-medium
+    profile: medium
+    variant: partial_correct
+    language: javascript
+
+    code: |
+      // userImporter.js
+
+      function parseAndValidate(row) {
+        const nome  = (row.nome  || '').trim();
+        const email = (row.email || '').trim();
+        const missing = [];
+        if (!nome)  missing.push('nome');
+        if (!email) missing.push('email');
+        return { nome, email, rawIdade: row.idade, rawPlano: row.plano, missing };
+      }
+
+      function normalizeFields(parsed) {
+        const idade = parseInt(parsed.rawIdade, 10);
+        const plano = (parsed.rawPlano || '').trim().toUpperCase() || 'FREE';
+        return {
+          nome:  parsed.nome,
+          email: parsed.email.toLowerCase(),
+          idade: isNaN(idade) ? 0 : idade,
+          plano,
+        };
+      }
+
+      function importUsers(rawRows) {
+        const valid  = [];
+        const errors = [];
+
+        for (let i = 0; i < rawRows.length; i++) {
+          const lineNumber = i + 1;
+          const parsed = parseAndValidate(rawRows[i]);
+
+          if (parsed.missing.length > 0) {
+            errors.push({ line: lineNumber, missingFields: parsed.missing });
+            continue;
+          }
+
+          valid.push(normalizeFields(parsed));
+        }
+
+        return { valid, errors };
+      }
+
+      module.exports = { importUsers };
+
+    justification: |
+      Extraí duas funções auxiliares: parseAndValidate, que limpa os campos e já
+      verifica se nome e email estão presentes, retornando a lista de campos ausentes;
+      e normalizeFields, que aplica lowercase no email, uppercase no plano com fallback
+      'FREE', e interpreta a idade como inteiro. O importUsers passa a orquestrar
+      essas duas funções sem duplicar lógica inline.
+
+      Essa separação melhora a legibilidade e torna normalizeFields diretamente
+      testável com objetos já validados.
+
+    expectedOverall: 3.30
+    expectedCriteria:
+      - criterionId: responsibility_identification
+        expectedScore: 3.5
+        rationale: |
+          A justificativa menciona parsing, validação e normalização, mas trata parsing
+          e validação como uma responsabilidade combinada ("parseAndValidate"), sem
+          reconhecer explicitamente que são responsabilidades distintas conforme o
+          enunciado. Acumulação de erros e montagem do resultado não são mencionadas
+          como responsabilidades separadas.
+
+      - criterionId: function_extraction
+        expectedScore: 2.5
+        rationale: |
+          parseAndValidate acumula duas responsabilidades distintas — extração/limpeza
+          de campos e verificação de obrigatoriedade — o que viola o princípio de
+          função com propósito único. normalizeFields está bem extraída. O
+          importUsers fica mais limpo, mas a extração incompleta deixa a separação
+          de responsabilidades parcial.
+
+      - criterionId: behavior_preservation
+        expectedScore: 4.5
+        rationale: |
+          Todas as regras de normalização estão corretas: email em lowercase, plano
+          em uppercase com fallback 'FREE', idade com parseInt e fallback 0 para NaN.
+          Erros acumulam { line, missingFields } com line 1-based. Resultado retorna
+          { valid, errors }. Comportamento preservado sem desvios.
+
+      - criterionId: coupling_reduction
+        expectedScore: 3.5
+        rationale: |
+          normalizeFields recebe o objeto parsed por parâmetro e retorna valor sem
+          efeito colateral. parseAndValidate recebe row e retorna objeto com dados
+          e lista de missing — sem estado externo. Porém, o retorno de parseAndValidate
+          mistura dados de duas etapas distintas (parsed + missing), criando acoplamento
+          de interface desnecessário entre parsing e validação.
+
+      - criterionId: reasoning
+        expectedScore: 2.5
+        rationale: |
+          A justificativa identifica as funções extraídas e menciona testabilidade de
+          normalizeFields, mas não explica por que a combinação de parsing e validação
+          em uma única função é uma decisão discutível, nem discute o ganho de
+          testabilidade independente para cada responsabilidade. A justificativa é
+          incompleta em relação à coesão das funções.
+
+    notes: |
+      expectedOverall = (3.5×0.20) + (2.5×0.35) + (4.5×0.25) + (3.5×0.10) + (2.5×0.10)
+                      = 0.70 + 0.875 + 1.125 + 0.35 + 0.25
+                      = 3.30.
+
+  - id: intermediate-csv-user-import-modularity-weak
+    profile: weak
+    variant: subtle_error
+    language: javascript
+
+    code: |
+      // userImporter.js
+
+      function processRow(row, lineNumber, valid, errors) {
+        const nome  = (row.nome  || '').trim();
+        const email = (row.email || '').trim();
+        const idade = parseInt(row.idade, 10);
+        const plano = (row.plano || '').trim().toUpperCase();
+
+        const missingFields = [];
+        if (!nome)  missingFields.push('nome');
+        if (!email) missingFields.push('email');
+
+        if (missingFields.length > 0) {
+          errors.push({ line: lineNumber, missingFields });
+          return;
+        }
+
+        valid.push({
+          nome,
+          email: email.toLowerCase(),
+          idade: isNaN(idade) ? 0 : idade,
+          plano: plano || 'FREE',
+        });
+      }
+
+      function importUsers(rawRows) {
+        const valid  = [];
+        const errors = [];
+
+        for (let i = 0; i < rawRows.length; i++) {
+          processRow(rawRows[i], i + 1, valid, errors);
+        }
+
+        return { valid, errors };
+      }
+
+      module.exports = { importUsers };
+
+    justification: |
+      Refatorei extraindo a função processRow, que centraliza todo o processamento
+      de uma linha: parsing, validação e normalização. O importUsers ficou mais
+      limpo, apenas iterando sobre as linhas e delegando o trabalho para processRow.
+      Isso melhora a legibilidade porque separa o loop da lógica de processamento
+      e torna o código mais fácil de ler.
+
+    expectedOverall: 1.88
+    expectedCriteria:
+      - criterionId: responsibility_identification
+        expectedScore: 1.0
+        rationale: |
+          A justificativa não nomeia as responsabilidades misturadas no código
+          original. Menciona apenas "parsing, validação e normalização" de forma
+          agregada como argumento para concentrá-las em uma só função, sem
+          reconhecer que separar essas responsabilidades é o objetivo da tarefa.
+          Acumulação de erros e montagem do resultado não são sequer citadas.
+
+      - criterionId: function_extraction
+        expectedScore: 1.0
+        rationale: |
+          processRow acumula todas as responsabilidades que o código original
+          também acumulava — parsing, validação, normalização, acumulação de
+          erros e montagem do resultado — em uma única função. Não houve extração
+          de funções com propósito único; apenas moveu o bloco inteiro do loop
+          para um nome diferente. A refatoração é cosmética.
+
+      - criterionId: behavior_preservation
+        expectedScore: 4.5
+        rationale: |
+          O comportamento principal é preservado: email em lowercase, idade com
+          fallback 0, plano em uppercase com fallback 'FREE', errors com
+          { line, missingFields } e retorno { valid, errors }. A nota não é máxima
+          apenas porque a solução mistura essa preservação com mutação direta de
+          valid/errors dentro de processRow, o que torna a estrutura menos segura
+          e menos clara, embora o resultado final continue equivalente.
+
+      - criterionId: coupling_reduction
+        expectedScore: 0.5
+        rationale: |
+          processRow recebe valid e errors por referência e os modifica diretamente,
+          introduzindo efeito colateral explícito. A função não retorna um valor;
+          ela opera por mutação de estado externo. Isso é o oposto de redução
+          de acoplamento: a dependência de estado externo foi formalizada como
+          parâmetro, tornando a função não testável de forma isolada sem fornecer
+          os arrays externos.
+
+      - criterionId: reasoning
+        expectedScore: 1.5
+        rationale: |
+          A justificativa menciona que o importUsers ficou mais limpo e que a
+          separação do loop da lógica melhora legibilidade, mas não explica
+          separação de responsabilidades, coesão ou testabilidade real das funções.
+          O argumento de "mais fácil de ler" é superficial e não aborda o objetivo
+          central da questão: modularidade com funções de propósito único.
+
+    notes: |
+      expectedOverall = (1.0×0.20) + (1.0×0.35) + (4.5×0.25) + (0.5×0.10) + (1.5×0.10)
+                      = 0.20 + 0.35 + 1.125 + 0.05 + 0.15
+                      = 1.875 → arredondado para 1.88.
+      A resposta é weak porque a refatoração é cosmética: apenas move o bloco para
+      um nome novo sem separar responsabilidades. O ponto de atenção para o avaliador
+      é function_extraction e coupling_reduction, que são os critérios centrais da
+      questão. Behavior_preservation fica razoável porque as regras numéricas estão
+      corretas, mas o acoplamento por mutação de estado é um erro estrutural relevante.

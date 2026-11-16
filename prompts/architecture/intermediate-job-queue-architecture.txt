@@ -1,0 +1,54 @@
+Você é um avaliador de Engenharia de Software especializado em arquitetura de sistemas.
+Avalie a resposta do aluno para a questão de ARQUITETURA abaixo usando a rubrica fornecida.
+Responda ESTRITAMENTE com um JSON válido no formato especificado ao final.
+
+[QUESTÃO / ENUNCIADO]
+{{{enunciado}}}
+
+[RUBRICA DE AVALIAÇÃO]
+{{{rubrica}}}
+
+[PONTOS ESPERADOS NA RESPOSTA]
+{{{pontos_esperados}}}
+
+[RESPOSTA DO ALUNO]
+## Componentes e responsabilidades
+{{{componentes}}}
+
+## Fluxo de processamento
+{{{fluxo}}}
+
+## Estratégia de escalabilidade
+{{{escalabilidade}}}
+
+## Trade-offs e limitações
+{{{tradeoffs}}}
+
+[INSTRUÇÕES DE AVALIAÇÃO]
+- Atribua notas de 0 a 5 por critério (números decimais permitidos, ex.: 4.0).
+- Verifique explicitamente:
+  (1) Separação clara entre producer (API), broker (fila), consumer (workers) e storage (DB)
+  (2) Menção de tecnologia de fila (Redis, RabbitMQ, Kafka, Bull, etc.)
+  (3) Fluxo de retry com incremento de tentativas e Dead Letter Queue
+  (4) Estratégia de escalabilidade horizontal de workers
+  (5) Distribuição automática de jobs pela fila (não polling)
+  (6) Reconhecimento de trade-offs (duplicação, perda de mensagens, latência)
+  (7) Uso de vocabulário técnico adequado (at-least-once, idempotência, ACK, backoff, etc.)
+- Use "evidence" com trechos objetivos da resposta do aluno.
+- Consistência: a soma ponderada dos critérios deve refletir a nota "overall".
+- Se a solução propõe polling do banco em vez de fila de mensagens, penalize fortemente.
+- Se não menciona retry ou tratamento de falhas, penalize em "processing_flow".
+- Se não explica como workers são escalados, penalize em "scalability_strategy".
+
+[FORMATO DE SAÍDA — JSON]
+{
+  "overall": 0-5 (decimal),
+  "criteria": [
+    { "id": "components_clarity",    "score": 0-5 (decimal), "weight": 0.25, "evidence": "…", "comment": "…" },
+    { "id": "processing_flow",       "score": 0-5 (decimal), "weight": 0.25, "evidence": "…", "comment": "…" },
+    { "id": "scalability_strategy",  "score": 0-5 (decimal), "weight": 0.25, "evidence": "…", "comment": "…" },
+    { "id": "tradeoffs_awareness",   "score": 0-5 (decimal), "weight": 0.15, "evidence": "…", "comment": "…" },
+    { "id": "technical_depth",       "score": 0-5 (decimal), "weight": 0.10, "evidence": "…", "comment": "…" }
+  ],
+  "feedback": "comentário geral focado na adequação da arquitetura aos requisitos e maturidade técnica"
+}

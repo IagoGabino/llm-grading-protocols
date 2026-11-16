@@ -1,0 +1,68 @@
+{
+  "runId": "multi-aggregate__intermediate-feature-flag-isolation__intermediate-feature-flag-isolation-medium__09b35c6565",
+  "rawOutputs": [
+    {
+      "output": "{\n  \"overall\": 4.85,\n  \"criteria\": [\n    {\n      \"id\": \"root_cause_diagnosis\",\n      \"score\": 5,\n      \"weight\": 0.3,\n      \"evidence\": [\n        \"O problema acontece porque o FeatureFlagManager guarda estado em memória e o Test A define NEW_UI como true sem limpar depois.\",\n        \"Quando Test B roda logo em seguida, encontra o valor que Test A deixou e falha.\"\n      ],\n      \"comment\": \"O aluno identificou corretamente o vazamento de estado em memória e a contaminação do Test B pelo Test A como causa raiz do problema.\"\n    },\n    {\n      \"id\": \"teardown_implementation\",\n      \"score\": 5,\n      \"weight\": 0.35,\n      \"evidence\": [\n        \"beforeEach(() => { featureFlags.reset(); });\"\n      ],\n      \"comment\": \"O aluno implementou corretamente o hook `beforeEach` do Jest para resetar o estado do `FeatureFlagManager` antes de cada teste, garantindo um estado limpo para cada execução.\"\n    },\n    {\n      \"id\": \"determinism\",\n      \"score\": 4.5,\n      \"weight\": 0.25,\n      \"evidence\": [\n        \"Assim, todo teste começa com o estado limpo. O Test B agora sempre encontra NEW_UI como false, independentemente de qual teste rodou antes.\"\n      ],\n      \"comment\": \"A solução proposta pelo aluno garante o determinismo e a independência da ordem de execução, pois cada teste inicia com um estado limpo. A justificativa aborda a independência da ordem, mas poderia ser um pouco mais explícita sobre a garantia para *qualquer* ordem, não apenas a sequência Test A -> Test B.\"\n    },\n    {\n      \"id\": \"conceptual_justification\",\n      \"score\": 5,\n      \"weight\": 0.1,\n      \"evidence\": [\n        \"Essa abordagem é boa porque garante que cada teste começa do zero, evitando que um teste quebre outro.\"\n      ],\n      \"comment\": \"A justificativa conceitual é clara e concisa, articulando o princípio de isolamento de testes ('cada teste começa do zero, evitando que um teste quebre outro') e como o hook escolhido o garante.\"\n    }\n  ],\n  \"feedback\": \"Excelente refatoração da suíte de testes! Você diagnosticou com precisão a causa raiz do flaky test, que é o vazamento de estado devido ao uso de um Singleton sem limpeza adequada. A implementação do `beforeEach` com `featureFlags.reset()` é a solução ideal para garantir que cada teste comece em um estado limpo e isolado, resolvendo o problema de determinismo. Sua justificativa é clara e demonstra um bom entendimento dos princípios de isolamento de testes. Muito bom trabalho!\"\n}",
+      "model": "google/gemini-2.5-flash",
+      "callIndex": 1,
+      "metadata": {
+        "engineStatus": "success",
+        "usage": {
+          "promptTokens": 2368,
+          "completionTokens": 640,
+          "totalTokens": 3008,
+          "reasoningTokens": 0,
+          "cachedTokens": 0,
+          "cacheWriteTokens": 0,
+          "costCredits": 0.0023104,
+          "upstreamInferenceCost": 0.0023104
+        },
+        "subcallIndex": 1,
+        "promptVariantId": "rubric_adherence",
+        "promptVariantInstruction": "Nesta avaliação, priorize a aderência estrita à rubrica. Atribua os scores considerando cuidadosamente os critérios, descritores e pesos definidos. Penalize respostas que pareçam boas de forma geral, mas que não atendam explicitamente ao que o critério avalia. Não use critérios externos à rubrica."
+      }
+    },
+    {
+      "output": "{\n  \"overall\": 4.75,\n  \"criteria\": [\n    {\n      \"id\": \"root_cause_diagnosis\",\n      \"score\": 5,\n      \"weight\": 0.3,\n      \"evidence\": [\n        \"O problema acontece porque o FeatureFlagManager guarda estado em memória e o Test A define NEW_UI como true sem limpar depois.\",\n        \"Quando Test B roda logo em seguida, encontra o valor que Test A deixou e falha.\"\n      ],\n      \"comment\": \"O aluno identificou corretamente o vazamento de estado em memória e a contaminação do Test B pelo Test A como a causa raiz do problema.\"\n    },\n    {\n      \"id\": \"teardown_implementation\",\n      \"score\": 5,\n      \"weight\": 0.35,\n      \"evidence\": [\n        \"beforeEach(() => { featureFlags.reset(); });\"\n      ],\n      \"comment\": \"O aluno implementou corretamente o hook `beforeEach` do Jest para resetar o estado do `FeatureFlagManager` antes de cada teste, garantindo um estado limpo para cada execução.\"\n    },\n    {\n      \"id\": \"determinism\",\n      \"score\": 4.5,\n      \"weight\": 0.25,\n      \"evidence\": [\n        \"Assim, todo teste começa com o estado limpo. O Test B agora sempre encontra NEW_UI como false, independentemente de qual teste rodou antes.\"\n      ],\n      \"comment\": \"A solução proposta pelo aluno, utilizando `beforeEach`, garante que a suíte de testes se torne determinística, pois cada teste inicia com um estado limpo, independentemente da ordem de execução. A justificativa aborda a independência da ordem de execução.\"\n    },\n    {\n      \"id\": \"conceptual_justification\",\n      \"score\": 4.5,\n      \"weight\": 0.1,\n      \"evidence\": [\n        \"Essa abordagem é boa porque garante que cada teste começa do zero, evitando que um teste quebre outro.\"\n      ],\n      \"comment\": \"O aluno articulou o princípio de isolamento de testes ao mencionar que 'cada teste começa do zero, evitando que um teste quebre outro', o que é uma boa justificativa conceitual para a solução.\"\n    }\n  ],\n  \"feedback\": \"Excelente trabalho na refatoração da suíte de testes! Você diagnosticou corretamente a causa raiz do problema como sendo o vazamento de estado devido ao Singleton e à falta de limpeza após o Test A. A implementação do `beforeEach` com `featureFlags.reset()` é a solução ideal para garantir que cada teste comece com um estado limpo, tornando a suíte determinística e independente da ordem de execução. Sua justificativa conceitual sobre o isolamento dos testes é clara e concisa. A solução demonstra um bom entendimento dos princípios de testes de software e do uso adequado dos hooks de ciclo de vida de frameworks de teste.\"\n}",
+      "model": "google/gemini-2.5-flash",
+      "callIndex": 2,
+      "metadata": {
+        "engineStatus": "success",
+        "usage": {
+          "promptTokens": 2362,
+          "completionTokens": 652,
+          "totalTokens": 3014,
+          "reasoningTokens": 0,
+          "cachedTokens": 0,
+          "cacheWriteTokens": 0,
+          "costCredits": 0.0023386,
+          "upstreamInferenceCost": 0.0023386
+        },
+        "subcallIndex": 2,
+        "promptVariantId": "textual_evidence",
+        "promptVariantInstruction": "Nesta avaliação, priorize evidências textuais presentes na resposta avaliada. Ao atribuir os scores, considere principalmente o que está explicitamente demonstrado no texto. Evite inferir conhecimento implícito quando ele não estiver sustentado por trechos, argumentos, exemplos ou explicações presentes na resposta."
+      }
+    },
+    {
+      "output": "{\n  \"overall\": 4.8,\n  \"criteria\": [\n    {\n      \"id\": \"root_cause_diagnosis\",\n      \"score\": 5,\n      \"weight\": 0.3,\n      \"evidence\": [\n        \"O problema acontece porque o FeatureFlagManager guarda estado em memória e o Test A define NEW_UI como true sem limpar depois.\",\n        \"Quando Test B roda logo em seguida, encontra o valor que Test A deixou e falha.\"\n      ],\n      \"comment\": \"O aluno identificou corretamente o vazamento de estado em memória e a contaminação do Test B pelo Test A como a causa raiz do problema.\"\n    },\n    {\n      \"id\": \"teardown_implementation\",\n      \"score\": 5,\n      \"weight\": 0.35,\n      \"evidence\": [\n        \"beforeEach(() => { featureFlags.reset(); });\"\n      ],\n      \"comment\": \"O aluno implementou corretamente o hook `beforeEach` para resetar o estado do `FeatureFlagManager` antes de cada teste, garantindo um estado limpo para cada execução.\"\n    },\n    {\n      \"id\": \"determinism\",\n      \"score\": 4.5,\n      \"weight\": 0.25,\n      \"evidence\": [\n        \"Assim, todo teste começa com o estado limpo. O Test B agora sempre encontra NEW_UI como false, independentemente de qual teste rodou antes.\"\n      ],\n      \"comment\": \"A solução proposta pelo aluno, utilizando `beforeEach`, garante que a suíte de testes se torne determinística, pois cada teste inicia com um estado limpo, independentemente da ordem de execução. A justificativa aborda a independência da ordem de execução.\"\n    },\n    {\n      \"id\": \"conceptual_justification\",\n      \"score\": 5,\n      \"weight\": 0.1,\n      \"evidence\": [\n        \"Essa abordagem é boa porque garante que cada teste começa do zero, evitando que um teste quebre outro.\"\n      ],\n      \"comment\": \"O aluno articulou o princípio de isolamento de testes, explicando que a solução garante que cada teste comece do zero e evita que um teste afete o outro.\"\n    }\n  ],\n  \"feedback\": \"Excelente trabalho na refatoração da suíte de testes! Você diagnosticou com precisão a causa raiz do flaky test como sendo o vazamento de estado devido ao Singleton e implementou a solução correta usando `beforeEach` para resetar o estado. Sua justificativa é clara e concisa, abordando o isolamento de testes e a garantia de determinismo. A solução é robusta e resolve o problema de forma eficaz.\"\n}",
+      "model": "google/gemini-2.5-flash",
+      "callIndex": 3,
+      "metadata": {
+        "engineStatus": "success",
+        "usage": {
+          "promptTokens": 2364,
+          "completionTokens": 598,
+          "totalTokens": 2962,
+          "reasoningTokens": 0,
+          "cachedTokens": 0,
+          "cacheWriteTokens": 0,
+          "costCredits": 0.0022042,
+          "upstreamInferenceCost": 0.0022042
+        },
+        "subcallIndex": 3,
+        "promptVariantId": "conceptual_coverage",
+        "promptVariantInstruction": "Nesta avaliação, priorize a cobertura conceitual da resposta. Verifique se os conceitos centrais esperados foram abordados de maneira correta e suficiente, mesmo que a organização, redação ou terminologia não sejam ideais. Penalize omissões conceituais relevantes e confusões entre conceitos importantes."
+      }
+    }
+  ]
+}

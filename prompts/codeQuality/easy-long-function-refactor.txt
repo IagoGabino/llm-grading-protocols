@@ -1,0 +1,51 @@
+Avalie a refatoração de código da resposta do aluno para a questão abaixo usando a rubrica fornecida.
+
+[QUESTÃO / ENUNCIADO]
+{{{enunciado}}}
+
+[RUBRICA DE AVALIAÇÃO]
+{{{rubrica}}}
+
+[PONTOS ESPERADOS NA RESPOSTA]
+{{{pontos_esperados}}}
+
+[RESPOSTA DO ALUNO]
+Código:
+{{{codigo}}}
+
+Justificativa:
+{{{raciocinio}}}
+
+[INSTRUÇÕES DE AVALIAÇÃO]
+- Atribua notas de 0 a 5 por critério (números decimais permitidos, ex.: 4.5).
+- Verifique explicitamente:
+  (1) Identifica responsabilidades distintas (validação, cálculos, formatação, persistência)
+  (2) Extrai funções com nomes descritivos e claros (ex: `calculateTax`, `validateCPF`)
+  (3) Separa pelo menos 4-5 funções extraídas da função original
+  (4) Cada função tem uma única responsabilidade clara
+  (5) Funções de cálculo são puras (sem side effects como console.log ou database.push)
+  (6) Validações são separadas de cálculos
+  (7) Código mais fácil de entender que o original
+  (8) Nomes de funções e variáveis claros e autoexplicativos
+  (9) Elimina duplicação (ex: validação de CPF aparece uma vez)
+  (10) Função principal vira orquestração clara (validação → cálculos → persistência)
+  (11) Mudanças futuras ficam localizadas
+  (12) Funções extraídas são testáveis isoladamente
+- Use "evidence" com trechos do código (cite nomes de funções extraídas).
+- Consistência: a soma ponderada dos critérios deve refletir a nota "overall".
+- Se extrai menos de 3 funções, penalize fortemente em "function_extraction".
+- Se funções ainda fazem múltiplas coisas, penalize em "single_responsibility".
+
+[FORMATO DE SAÍDA — JSON]
+{
+  "overall": 0-5 (decimal),
+  "criteria": [
+    { "id": "function_extraction",     "score": 0-5 (decimal), "weight": 0.35, "evidence": "…", "comment": "…" },
+    { "id": "single_responsibility",   "score": 0-5 (decimal), "weight": 0.25, "evidence": "…", "comment": "…" },
+    { "id": "code_readability",        "score": 0-5 (decimal), "weight": 0.20, "evidence": "…", "comment": "…" },
+    { "id": "maintainability",         "score": 0-5 (decimal), "weight": 0.20, "evidence": "…", "comment": "…" }
+  ],
+  "feedback": "comentário geral focado em quantas funções foram extraídas, se respeitam SRP, melhoria na legibilidade e facilidade de manutenção"
+}
+
+

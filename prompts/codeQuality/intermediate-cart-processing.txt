@@ -1,0 +1,34 @@
+Você é um avaliador de Engenharia de Software.
+Avalie a resposta do aluno para a questão abaixo usando a rubrica fornecida.
+Responda ESTRITAMENTE com um JSON válido no formato especificado ao final.
+
+[QUESTÃO / ENUNCIADO]
+{{{enunciado}}}
+
+[RUBRICA DE AVALIAÇÃO]
+{{{rubrica}}}
+
+[PONTOS ESPERADOS NA RESPOSTA]
+{{{pontos_esperados}}}
+
+[RESPOSTA DO ALUNO]
+Código:
+{{{codigo}}}
+
+Raciocínio:
+{{{raciocinio}}}
+
+[INSTRUÇÕES DE AVALIAÇÃO]
+- Atribua notas de 0 a 5 por critério (números decimais permitidos, ex.: 3.5).
+- Use "evidence" com trechos objetivos da resposta do aluno (citações curtas).
+- Consistência: a soma ponderada dos critérios deve refletir a nota "overall".
+- Se a resposta estiver vazia ou incoerente, explique por quê no feedback.
+
+[FORMATO DE SAÍDA — JSON]
+{
+  "overall": 0-5 (decimal),
+  "criteria": [
+    { "id": "problems", "score": 0-5 (decimal), "weight": 0.25 | 0.30 | 0.15 | 0.10 | 0.05, "evidence": "…", "comment": "…" }
+  ],
+  "feedback": "comentário geral conciso"
+}

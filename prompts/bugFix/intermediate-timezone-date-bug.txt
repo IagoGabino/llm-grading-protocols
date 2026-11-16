@@ -1,0 +1,45 @@
+Avalie a correção de BUG da resposta do aluno para a questão abaixo usando a rubrica fornecida.
+
+[QUESTÃO / ENUNCIADO]
+{{{enunciado}}}
+
+[RUBRICA DE AVALIAÇÃO]
+{{{rubrica}}}
+
+[PONTOS ESPERADOS NA RESPOSTA]
+{{{pontos_esperados}}}
+
+[RESPOSTA DO ALUNO]
+Código:
+{{{codigo}}}
+
+Justificativa:
+{{{raciocinio}}}
+
+[INSTRUÇÕES DE AVALIAÇÃO]
+- Atribua notas de 0 a 5 por critério (números decimais permitidos, ex.: 4.5).
+- Verifique explicitamente:
+  (1) Identifica uso de Date/datetime local em vez de UTC
+  (2) Reconhece que filtros de data não consideram timezone do usuário
+  (3) Entende que apresentação deve converter UTC → timezone do usuário
+  (4) Armazena datas em UTC (`.toISOString()`, `datetime.now(timezone.utc)`, `ZonedDateTime.now(ZoneId.of("UTC"))`)
+  (5) Converte range de dia (00:00-23:59) do timezone do usuário para UTC antes de filtrar
+  (6) Usa biblioteca apropriada (`date-fns-tz`, `pytz`, `java.time`)
+  (7) Trata horário de verão (DST) usando biblioteca que resolve automaticamente
+  (8) Considera datas no limite de meia-noite (usa `>=` e `<=`, inclui `23:59:59.999`)
+  (9) Evita offset fixo (ex: `-3 horas`), usa `ZoneId`/`timezone` dinâmico
+- Use "evidence" com trechos do código (cite as funções/bibliotecas usadas).
+- Consistência: a soma ponderada dos critérios deve refletir a nota "overall".
+- Se ainda usa Date local ou não converte range para UTC, penalize fortemente em "fix_correctness".
+
+[FORMATO DE SAÍDA — JSON]
+{
+  "overall": 0-5 (decimal),
+  "criteria": [
+    { "id": "bug_identification",  "score": 0-5 (decimal), "weight": 0.25, "evidence": "…", "comment": "…" },
+    { "id": "fix_correctness",     "score": 0-5 (decimal), "weight": 0.35, "evidence": "…", "comment": "…" },
+    { "id": "edge_cases",          "score": 0-5 (decimal), "weight": 0.20, "evidence": "…", "comment": "…" },
+    { "id": "code_quality",        "score": 0-5 (decimal), "weight": 0.20, "evidence": "…", "comment": "…" }
+  ],
+  "feedback": "comentário geral focado em correção funcional, uso de bibliotecas e tratamento de casos extremos"
+}

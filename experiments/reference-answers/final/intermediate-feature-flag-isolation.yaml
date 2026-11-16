@@ -1,0 +1,265 @@
+questionSlug: intermediate-feature-flag-isolation
+
+answers:
+  - id: intermediate-feature-flag-isolation-strong
+    profile: strong
+    variant: complete_correct
+    language: javascript
+
+    code: |
+      // test/featureFlags.test.js
+      const featureFlags = require('../src/FeatureFlagManager');
+
+      describe('FeatureFlagManager', () => {
+        afterEach(() => {
+          featureFlags.reset();
+        });
+
+        test('Test A — NEW_UI ativa altera comportamento do sistema', () => {
+          featureFlags.set('NEW_UI', true);
+          expect(featureFlags.isEnabled('NEW_UI')).toBe(true);
+        });
+
+        test('Test B — comportamento padrão sem flags ativas', () => {
+          expect(featureFlags.isEnabled('NEW_UI')).toBe(false);
+        });
+      });
+
+    justification: |
+      (a) Por que o problema ocorre:
+      O FeatureFlagManager é um Singleton — existe uma única instância compartilhada
+      em todo o processo. O Test A chama featureFlags.set('NEW_UI', true) e nunca
+      invoca reset(). Quando a suíte roda em sequência (Test A → Test B), o estado
+      mutado por Test A permanece ativo na instância compartilhada. Test B assume
+      que NEW_UI começa em false (estado inicial), mas encontra true e falha. Como
+      o estado depende da ordem de execução dos testes, o bug se manifesta como
+      Flaky Test: cada teste passa isoladamente, mas falham em conjunto.
+
+      (b) Qual hook foi usado e por quê:
+      Introduzi afterEach(() => featureFlags.reset()). O afterEach é executado pelo
+      Jest após cada teste do describe, garantindo que o estado do Singleton seja
+      restaurado ao estado inicial independentemente do que o teste fez. Usar
+      afterEach em vez de adicionar reset() manualmente dentro de cada teste é
+      preferível porque: (1) centraliza a limpeza em um único lugar, (2) protege
+      todos os testes presentes e futuros automaticamente, e (3) explicita a
+      intenção de isolamento no próprio setup da suíte.
+
+      (c) Como a solução garante que a ordem de execução não afeta o resultado:
+      Com o afterEach, ao final de qualquer teste o estado é resetado. Isso torna
+      a suíte determinística em qualquer ordem:
+      - Test A → Test B: Test A seta NEW_UI, afterEach reseta, Test B encontra estado limpo. ✅
+      - Test B → Test A: Test B encontra estado limpo (nunca foi alterado), afterEach reseta
+        (no-op), Test A seta NEW_UI e passa. ✅
+      Cada teste é completamente independente do histórico de execução dos demais.
+
+    expectedOverall: 5.0
+    expectedCriteria:
+      - criterionId: root_cause_diagnosis
+        expectedScore: 5.0
+        rationale: |
+          A justificativa nomeia explicitamente o Singleton como instância compartilhada,
+          identifica que Test A não invoca reset() e explica o mecanismo de contaminação:
+          estado mutado permanece ativo quando Test B executa em seguida. O termo
+          "Shared State" e "Flaky Test" são usados corretamente no contexto causal.
+
+      - criterionId: teardown_implementation
+        expectedScore: 5.0
+        rationale: |
+          afterEach(() => featureFlags.reset()) está posicionado dentro do describe,
+          usa o hook correto do Jest e invoca reset() — o método de limpeza exposto
+          pelo Singleton. Não há reset manual dentro dos testes individuais. A solução
+          é mínima, correta e não altera a classe FeatureFlagManager.
+
+      - criterionId: determinism
+        expectedScore: 5.0
+        rationale: |
+          A justificativa demonstra explicitamente os dois sentidos de execução
+          (A→B e B→A) e argumenta que ambos passam, com raciocínio preciso para
+          cada caso. Cobre integralmente o que a rubrica exige: suíte determinística
+          independentemente da ordem de execução.
+
+      - criterionId: conceptual_justification
+        expectedScore: 5.0
+        rationale: |
+          Articula o princípio de Test Isolation, explica por que centralizar o
+          teardown no hook é preferível a dispersar reset() nos testes (três razões
+          enumeradas), e demonstra independência de ordem com os dois cenários.
+          Cobre integralmente o que a rubrica exige para justificativa conceitual.
+
+    notes: |
+      expectedOverall = (5.0×0.30) + (5.0×0.35) + (5.0×0.25) + (5.0×0.10)
+                      = 1.50 + 1.75 + 1.25 + 0.50
+                      = 5.0.
+
+  - id: intermediate-feature-flag-isolation-medium
+    profile: medium
+    variant: conceptually_close_incomplete
+    language: javascript
+
+    code: |
+      // test/featureFlags.test.js
+      const featureFlags = require('../src/FeatureFlagManager');
+
+      describe('FeatureFlagManager', () => {
+        beforeEach(() => {
+          featureFlags.reset();
+        });
+
+        test('Test A — NEW_UI ativa altera comportamento do sistema', () => {
+          featureFlags.set('NEW_UI', true);
+          expect(featureFlags.isEnabled('NEW_UI')).toBe(true);
+        });
+
+        test('Test B — comportamento padrão sem flags ativas', () => {
+          expect(featureFlags.isEnabled('NEW_UI')).toBe(false);
+        });
+      });
+
+    justification: |
+      O problema acontece porque o FeatureFlagManager guarda estado em memória e o
+      Test A define NEW_UI como true sem limpar depois. Quando Test B roda logo em
+      seguida, encontra o valor que Test A deixou e falha.
+
+      Para corrigir, adicionei um beforeEach que chama featureFlags.reset() antes de
+      cada teste. Assim, todo teste começa com o estado limpo. O Test B agora sempre
+      encontra NEW_UI como false, independentemente de qual teste rodou antes.
+
+      Essa abordagem é boa porque garante que cada teste começa do zero, evitando
+      que um teste quebre outro.
+
+    expectedOverall: 3.88
+    expectedCriteria:
+      - criterionId: root_cause_diagnosis
+        expectedScore: 3.5
+        rationale: |
+          Identifica que Test A "define NEW_UI como true sem limpar depois" e que
+          Test B "encontra o valor que Test A deixou". Porém não nomeia o padrão
+          Singleton, não usa o termo "Shared State" ou "estado global compartilhado",
+          e não explica por que os testes passam isoladamente mas falham em conjunto.
+          O diagnóstico é parcialmente correto, mas superficial na causa estrutural.
+
+      - criterionId: teardown_implementation
+        expectedScore: 4.5
+        rationale: |
+          beforeEach(() => featureFlags.reset()) é uma alternativa válida ao afterEach:
+          garante estado limpo antes de cada teste. O hook está posicionado corretamente
+          dentro do describe e invoca reset(). A pequena penalização reflete que
+          beforeEach é ligeiramente menos idiomático para teardown (limpa antes em vez
+          de depois), mas é funcionalmente equivalente para este caso.
+
+      - criterionId: determinism
+        expectedScore: 4.0
+        rationale: |
+          A justificativa afirma "todo teste começa com o estado limpo" e
+          "independentemente de qual teste rodou antes" — o que é justamente
+          determinismo. A resposta entende o ponto central: o beforeEach garante
+          estado limpo antes de qualquer teste, eliminando a dependência de ordem.
+          Perde 1.0 porque não demonstra explicitamente o cenário invertido
+          (Test B → Test A) com raciocínio passo a passo.
+
+      - criterionId: conceptual_justification
+        expectedScore: 2.5
+        rationale: |
+          Menciona que "cada teste começa do zero" e que "evita que um teste quebre
+          outro" — articulação parcial do princípio de Test Isolation. Não nomeia
+          o princípio formalmente, não discute a diferença conceitual entre beforeEach
+          e afterEach, e não conecta a escolha ao problema de dependência de ordem
+          como princípio geral. Incompleta, mas não vazia.
+
+    notes: |
+      expectedOverall = (3.5×0.30) + (4.5×0.35) + (4.0×0.25) + (2.5×0.10)
+                      = 1.05 + 1.575 + 1.00 + 0.25
+                      = 3.875 → arredondado para 3.88.
+
+  - id: intermediate-feature-flag-isolation-misleading
+    profile: misleading
+    variant: good_writing_low_coverage
+    language: javascript
+
+    code: |
+      // test/featureFlags.test.js
+      const featureFlags = require('../src/FeatureFlagManager');
+
+      describe('FeatureFlagManager', () => {
+        test('Test A — NEW_UI ativa altera comportamento do sistema', () => {
+          featureFlags.set('NEW_UI', true);
+          expect(featureFlags.isEnabled('NEW_UI')).toBe(true);
+          featureFlags.reset(); // limpa o estado ao final do teste
+        });
+
+        test('Test B — comportamento padrão sem flags ativas', () => {
+          expect(featureFlags.isEnabled('NEW_UI')).toBe(false);
+        });
+      });
+
+    justification: |
+      O problema é causado pelo estado compartilhado do FeatureFlagManager: como é um
+      Singleton, a mesma instância é usada por todos os testes. O Test A seta NEW_UI
+      para true e não limpa o estado, então quando Test B roda em seguida, encontra
+      o valor modificado por Test A.
+
+      A solução é chamar featureFlags.reset() ao final do Test A, logo depois das
+      assertions. Dessa forma, o estado fica limpo para o próximo teste. O Test B
+      sempre encontrará NEW_UI como false porque o Test A faz a limpeza antes de
+      terminar.
+
+      Isso resolve o Flaky Test porque o estado do Singleton é explicitamente
+      restaurado pelo teste que o modifica, seguindo o princípio de que cada teste
+      deve deixar o ambiente como encontrou.
+
+    expectedOverall: 2.23
+    expectedCriteria:
+      - criterionId: root_cause_diagnosis
+        expectedScore: 4.0
+        rationale: |
+          Identifica corretamente o Singleton como instância compartilhada e explica
+          que Test A modifica o estado sem limpeza, contaminando Test B. O diagnóstico
+          da causa raiz está correto e usa terminologia adequada ("estado compartilhado",
+          "Singleton"). A nota não é máxima porque a justificativa não nomeia
+          explicitamente o padrão "Shared State" nem menciona o caráter intermitente
+          (Flaky) decorrente da dependência de ordem.
+
+      - criterionId: teardown_implementation
+        expectedScore: 1.5
+        rationale: |
+          O reset() é chamado manualmente dentro do corpo do Test A, após as assertions,
+          em vez de ser introduzido em um hook de ciclo de vida (afterEach/beforeEach).
+          Isso é fundamentalmente diferente de usar um hook: (1) o reset não é
+          executado se o teste falhar antes de chegar à linha de reset; (2) a
+          proteção não é automática para testes futuros — qualquer novo teste que
+          modifique flags precisará adicionar manualmente seu próprio reset; (3) não
+          há nenhum mecanismo de limpeza declarado no nível da suíte. A solução é
+          frágil e não satisfaz o critério de teardown estrutural.
+
+      - criterionId: determinism
+        expectedScore: 1.0
+        rationale: |
+          A solução melhora apenas o caso específico Test A → Test B quando Test A
+          chega até a linha de reset(). Ela não estabelece uma garantia estrutural
+          de isolamento: se Test A falhar antes do reset, ou se outro teste modificar
+          flags sem limpeza manual, o vazamento reaparece. Portanto, a suíte continua
+          dependente de disciplina manual e não de um mecanismo determinístico de
+          ciclo de vida. A justificativa ainda afirma dependência de ordem ao dizer
+          que "Test B sempre encontrará NEW_UI como false porque o Test A faz a
+          limpeza" — o que contradiz o princípio de independência.
+
+      - criterionId: conceptual_justification
+        expectedScore: 2.5
+        rationale: |
+          Menciona "que cada teste deve deixar o ambiente como encontrou", que é
+          uma articulação parcialmente correta do princípio de Test Isolation.
+          No entanto, a aplicação do princípio está errada: o "deixar o ambiente
+          como encontrou" é implementado via reset manual no corpo do teste, não
+          via hook, o que é uma solução frágil que não generaliza. A justificativa
+          soa bem tecnicamente, mas está desalinhada com a solução correta.
+
+    notes: |
+      expectedOverall = (4.0×0.30) + (1.5×0.35) + (1.0×0.25) + (2.5×0.10)
+                      = 1.20 + 0.525 + 0.25 + 0.25
+                      = 2.225 → arredondado para 2.23.
+      A resposta é misleading porque o diagnóstico forte mascara a solução
+      estruturalmente errada. O ponto central é teardown_implementation: reset
+      manual no corpo do teste não é equivalente a um hook de ciclo de vida.
+      A resposta parece boa à primeira leitura porque identifica o Singleton e
+      usa termos corretos, mas falha no critério de maior peso (0.35) e no
+      determinism (0.25).

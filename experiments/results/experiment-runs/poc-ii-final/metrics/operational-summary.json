@@ -1,0 +1,38 @@
+{
+  "experimentId": "poc-ii-final",
+  "byStrategy": {
+    "single": {
+      "foundRuns": 24,
+      "totalCallCount": 24,
+      "avgCallCount": 1,
+      "totalLatencyMs": 168158,
+      "avgLatencyMs": 7006.5833,
+      "maxLatencyMs": 14964,
+      "totalCostCredits": 0.0928855,
+      "avgCostCredits": 0.00387023,
+      "costAvailableRuns": 24
+    },
+    "review": {
+      "foundRuns": 24,
+      "totalCallCount": 48,
+      "avgCallCount": 2,
+      "totalLatencyMs": 310796,
+      "avgLatencyMs": 12949.8333,
+      "maxLatencyMs": 18640,
+      "totalCostCredits": 0.1821893,
+      "avgCostCredits": 0.00759122,
+      "costAvailableRuns": 24
+    },
+    "multi_aggregate": {
+      "foundRuns": 24,
+      "totalCallCount": 72,
+      "avgCallCount": 3,
+      "totalLatencyMs": 484698,
+      "avgLatencyMs": 20195.75,
+      "maxLatencyMs": 27104,
+      "totalCostCredits": 0.2784707,
+      "avgCostCredits": 0.01160295,
+      "costAvailableRuns": 24
+    }
+  }
+}

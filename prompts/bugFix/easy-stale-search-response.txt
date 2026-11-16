@@ -1,0 +1,42 @@
+Avalie a correção de BUG da resposta do aluno para a questão abaixo usando a rubrica fornecida.
+
+[QUESTÃO / ENUNCIADO]
+{{{enunciado}}}
+
+[RUBRICA DE AVALIAÇÃO]
+{{{rubrica}}}
+
+[PONTOS ESPERADOS NA RESPOSTA]
+{{{pontos_esperados}}}
+
+[RESPOSTA DO ALUNO]
+Código:
+{{{codigo}}}
+
+Raciocínio:
+{{{raciocinio}}}
+
+[INSTRUÇÕES DE AVALIAÇÃO]
+- Atribua notas de 0 a 5 por critério (números decimais permitidos, ex.: 3.5).
+- Verifique explicitamente:
+  (1) se o aluno identifica que múltiplas requisições assíncronas concorrentes podem resolver fora de ordem e que `setEmployees` é chamado pela requisição mais lenta, sobrescrevendo o estado correto;
+  (2) se a correção impede que respostas de requisições antigas atualizem o estado — usando flag de cancelamento (`let cancelled`), `AbortController`, identificador incremental de requisição ou técnica equivalente; aceite qualquer mecanismo correto, não exija uma técnica específica;
+  (3) se o retorno da função de limpeza do `useEffect` está presente e invalida ou cancela a requisição em andamento quando `query` muda ou o componente é desmontado;
+  (4) se a busca continua funcionando após a correção — a lista de funcionários é atualizada normalmente quando a requisição mais recente responde;
+  (5) se o aluno explica em linguagem clara por que o bug ocorre e como a correção o resolve.
+- Use "evidence" com trechos objetivos da resposta do aluno (citações curtas do código ou do raciocínio).
+- Consistência: a soma ponderada dos critérios deve refletir a nota "overall".
+- Se a resposta estiver vazia ou incoerente, explique por quê no feedback.
+
+[FORMATO DE SAÍDA — JSON]
+{
+  "overall": 0-5 (decimal),
+  "criteria": [
+    { "id": "root_cause",          "score": 0-5 (decimal), "weight": 0.30, "evidence": "…", "comment": "…" },
+    { "id": "functional_fix",      "score": 0-5 (decimal), "weight": 0.35, "evidence": "…", "comment": "…" },
+    { "id": "lifecycle_handling",  "score": 0-5 (decimal), "weight": 0.15, "evidence": "…", "comment": "…" },
+    { "id": "search_preservation", "score": 0-5 (decimal), "weight": 0.10, "evidence": "…", "comment": "…" },
+    { "id": "explanation",         "score": 0-5 (decimal), "weight": 0.10, "evidence": "…", "comment": "…" }
+  ],
+  "feedback": "comentário geral conciso"
+}

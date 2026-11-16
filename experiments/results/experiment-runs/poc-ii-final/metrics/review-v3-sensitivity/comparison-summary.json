@@ -1,0 +1,62 @@
+[
+  {
+    "strategy": "single",
+    "source": "official",
+    "plannedRuns": 24,
+    "successRuns": 24,
+    "successRate": 1,
+    "overallMAE": 0.2658,
+    "meanSignedError": 0.14,
+    "totalCallCount": 24,
+    "totalCostCredits": 0.0928855,
+    "avgLatencyMs": 7006.5833
+  },
+  {
+    "strategy": "review_v1",
+    "source": "official",
+    "plannedRuns": 24,
+    "successRuns": 24,
+    "successRate": 1,
+    "overallMAE": 0.3092,
+    "meanSignedError": 0.1067,
+    "totalCallCount": 48,
+    "totalCostCredits": 0.1821893,
+    "avgLatencyMs": 12949.8333
+  },
+  {
+    "strategy": "review_v2_conservative",
+    "source": "sensitivity",
+    "plannedRuns": 24,
+    "successRuns": 24,
+    "successRate": 1,
+    "overallMAE": 0.27,
+    "meanSignedError": 0.1442,
+    "totalCallCount": 24,
+    "totalCostCredits": 0.0949988,
+    "avgLatencyMs": 6195.6667
+  },
+  {
+    "strategy": "review_v3_balanced",
+    "source": "sensitivity",
+    "plannedRuns": 24,
+    "successRuns": 24,
+    "successRate": 1,
+    "overallMAE": 0.2146,
+    "meanSignedError": 0.0271,
+    "totalCallCount": 24,
+    "totalCostCredits": 0.1004695,
+    "avgLatencyMs": 6723.25
+  },
+  {
+    "strategy": "multi_aggregate",
+    "source": "official",
+    "plannedRuns": 24,
+    "successRuns": 24,
+    "successRate": 1,
+    "overallMAE": 0.255,
+    "meanSignedError": 0.0983,
+    "totalCallCount": 72,
+    "totalCostCredits": 0.2784707,
+    "avgLatencyMs": 20195.75
+  }
+]

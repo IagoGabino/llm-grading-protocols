@@ -1,0 +1,207 @@
+questionSlug: advanced-idempotent-api-admissions
+
+answers:
+  - id: advanced-idempotent-api-admissions-strong
+    profile: strong
+    variant: complete_correct
+
+    answerText: |
+      ### O Contrato do Cliente
+
+      Para garantir que intenções de transação únicas sejam processadas apenas uma vez, a API passa a exigir o cabeçalho `Idempotency-Key`. O cliente deve gerar um UUID (versão 4) localmente no momento em que a intenção de internar o paciente é formada. Esse exato UUID acompanha a requisição original e todas as eventuais retentativas de rede.
+      
+      O uso de um UUID externo é essencial. Não podemos usar o paciente ou a data como chave, pois readmissões no mesmo dia e no mesmo leito são um fluxo de negócio válido. O servidor também não pode gerar a chave, pois se a conexão cair, o cliente não saberia qual chave foi gerada e uma retentativa criaria uma nova internação. Se a requisição não trouxer a chave, a API rejeita com HTTP 400 Bad Request.
+
+      Sobre as respostas HTTP:
+      - Quando a operação é concluída pela primeira vez: retornamos HTTP 201 Created junto com o cabeçalho Location.
+      - Quando ocorre uma retentativa de uma transação finalizada com sucesso (com o mesmo payload): servimos uma cópia da resposta anterior com HTTP 200 OK.
+      - Quando há conflito no conteúdo (mesma chave, mas JSON diferente): rejeitamos com HTTP 422 Unprocessable Entity.
+      - Quando a operação original ainda está no meio do processamento: respondemos com HTTP 409 Conflict, enviando também um cabeçalho `Retry-After: 5` para que o cliente não bombardeie o servidor.
+
+      ### O Registro Transacional e Controle de Concorrência
+
+      A base principal de armazenamento será o próprio PostgreSQL da aplicação, mantendo uma tabela dedicada chamada `transaction_idempotency`. Ela armazenará o UUID (com constraint UNIQUE), o estágio atual (processando / concluído / erro), uma assinatura digital (SHA-256) do payload recebido e o blob JSON contendo a resposta gerada.
+
+      Para lidar com acessos concorrentes — como o cliente enviando dois retries idênticos no mesmo milissegundo — usamos as garantias ACID do banco. O fluxo inicia com uma tentativa de `INSERT` do registro com status "processando". 
+      Como a coluna do UUID tem uma restrição `UNIQUE`, se duas requisições tentarem inserir a mesma chave simultaneamente, apenas uma terá sucesso. Quando o `INSERT` falhar porque a `Idempotency-Key` já existe, a aplicação consulta o registro existente em `transaction_idempotency`.
+
+      Se o status ainda estiver como "processando", retorna HTTP 409 Conflict com `Retry-After`, pois a operação original ainda não terminou. Se o status estiver como "concluído", compara o SHA-256 do payload recebido com o hash armazenado: se forem iguais, retorna a resposta JSON armazenada; se forem diferentes, retorna HTTP 422 Unprocessable Entity. Assim, a constraint única não serve apenas para bloquear corrida, mas também como ponto de entrada para recuperar o estado idempotente da transação.
+      
+      Uma vez inserido com sucesso, o fluxo de negócio prossegue, a internação é salva e a tabela `transaction_idempotency` é atualizada para "concluído", gravando o payload de resposta.
+      Opcionalmente, poderíamos adicionar um Redis à frente (usando `SET key value NX`) para atuar como um lock rápido, mas o banco de dados relacional já provê a atomicidade necessária e atua como fonte de verdade.
+
+      ### Retenção e Limites Operacionais
+
+      A tabela de controle de transações não precisa crescer indefinidamente. Defino um tempo de retenção (TTL) de 7 dias, tempo suficiente para cobrir as piores janelas de indisponibilidade ou manutenção em integrações de saúde.
+      O custo em disco é ínfimo — um UUID, um hash curto e um JSON leve. Um job diário de limpeza apaga chaves antigas (`created_at < NOW() - INTERVAL '7 days'`) sem grande overhead.
+      
+      Se um cliente reutilizar a mesma chave após 8 dias, a API processará como uma operação nova. Isso é o esperado, pois um atraso tão longo dificilmente representa um simples retry de rede. Outra limitação inerente é a falha na entrega da resposta: se a API conclui a operação, salva a resposta, mas a rede cai antes do cliente receber o 200 OK, a transação foi efetivada do lado do servidor. Retentativas futuras apenas receberão o cache salvo, não sendo possível desfazer a ação por vias do protocolo HTTP em si (dependeria de um cancelamento de negócio explícito).
+
+    expectedOverall: 4.90
+    expectedCriteria:
+      - criterionId: api_contract
+        expectedScore: 5.0
+        rationale: |
+          Introduz Idempotency-Key UUID gerada pelo cliente de forma clara, justificando a não utilização de 
+          atributos clínicos (readmissões legítimas) e por que o servidor não deve criá-la. Apresenta o mapeamento
+          de status HTTP em formato descritivo, saindo da cópia de tabela (201 primeira, 200 cacheado, 422 conflito 
+          de payload, 409 + Retry-After para retry e 400 para ausência).
+
+      - criterionId: backend_flow
+        expectedScore: 5.0
+        rationale: |
+          Afasta-se da estrutura baseada unicamente em Redis SETNX vista no outline e foca em inserção 
+          atômica no PostgreSQL com UNIQUE constraint, tratando exceções de concorrência e armazenando hash
+          de payload e status. O fluxo contempla a resposta cacheada e valida colisões.
+
+      - criterionId: http_status_codes
+        expectedScore: 4.5
+        rationale: |
+          Descreve todos os retornos essenciais requeridos: 201, 200 para concluído, 422 para colisão, 409+Retry-After
+          e 400. Recebe penalização mínima apenas pela ausência de debate entre 201 e 200 para os retries 
+          concluídos, já decidindo puramente pelo 200.
+
+      - criterionId: ttl_and_tradeoffs
+        expectedScore: 5.0
+        rationale: |
+          TTL estimado e embasado em 7 dias com rotina de limpeza. O custo é avaliado como mínimo, e 
+          reconhece as bordas da arquitetura: perda de resposta após efetivação e uso de chaves velhas,
+          comprovando um excelente entendimento dos limites.
+
+    notes: |
+      expectedOverall = (5.0×0.30) + (5.0×0.35) + (4.5×0.20) + (5.0×0.15)
+                      = 1.50 + 1.75 + 0.90 + 0.75
+                      = 4.90.
+
+  - id: advanced-idempotent-api-admissions-medium
+    profile: medium
+    variant: partial_correct
+
+    answerText: |
+      ### O Uso de Idempotency-Key
+      
+      Para não criar duas internações quando a rede falha, o cliente precisa identificar univocamente a sua ação. Para isso, ele envia no cabeçalho HTTP o campo `Idempotency-Key`, contendo um UUID que ele próprio gerou. A API usará esse valor para saber se uma requisição é inédita ou um retry. Não é possível checar isso usando dados do paciente, visto que a mesma pessoa pode sair e voltar para o mesmo quarto horas depois.
+      
+      Os retornos da API seriam:
+      - Se a requisição chega sem o cabeçalho: retorna 400 Bad Request.
+      - Quando a requisição é processada com sucesso na primeira vez: 201 Created.
+      - Se for um retry mas o servidor já estiver trabalhando na chave: retorna 202 Accepted para avisar que está em andamento.
+      - Se o retry chegar quando já acabamos: devolvemos 200 OK com os dados do processamento original.
+
+      ### Como a API Lida com os Retries
+      
+      Teremos uma tabela `requisicoes_processadas` no banco de dados. Essa tabela armazena a `Idempotency-Key`, um campo de estado (`andamento` ou `pronto`) e os dados de resposta do processo.
+      
+      Quando chega um pedido, iniciamos uma transação no banco e fazemos um `SELECT` para ver se aquela chave já foi cadastrada.
+      Se já existir e estiver "pronto", nós pegamos a resposta guardada e a retornamos.
+      Se estiver "andamento", nós retornamos o HTTP 202.
+      Se não existir, inserimos o registro na tabela como "andamento". Depois chamamos a lógica de internação real, e no final atualizamos o status na tabela para "pronto", salvando o JSON de resposta final, retornando 201.
+
+      ### Retenção dos Dados e Limitações
+      
+      Para não lotar o banco, essas chaves guardadas podem ter uma validade (TTL) de alguns dias, apagando as antigas automaticamente. Não tem muito problema de custo porque é uma quantidade pequena de dados.
+      Um ponto de atenção é que se o cliente for mal implementado e mandar UUIDs novos toda vez que der erro de timeout, a API ainda criará dados duplicados, já que cada request será vista como uma nova operação.
+
+    expectedOverall: 2.80
+    expectedCriteria:
+      - criterionId: api_contract
+        expectedScore: 4.0
+        rationale: |
+          Requer o cabeçalho Idempotency-Key em UUID gerado pelo cliente, citando a razão correta para não
+          basear em atributos clínicos. Todavia, a resposta é punida pois falha em não descrever o tratamento de conflito 
+          quando o payload muda (422), ficando limitada a retentativas óbvias.
+
+      - criterionId: backend_flow
+        expectedScore: 2.0
+        rationale: |
+          A abordagem tenta guardar o andamento, mas sugere um SELECT seguido de INSERT na tabela. 
+          Essa implementação (Check-Then-Act) não possui atomicidade garantida (como um SETNX, constraint ou
+          lock pessimista) e vai gerar Race Conditions em caso de concorrência paralela alta (que é
+          justamente o problema da questão). Além disso, não há mecanismos para validação do payload (como hash).
+
+      - criterionId: http_status_codes
+        expectedScore: 3.0
+        rationale: |
+          Fornece os códigos 400, 201, 202 para em andamento e 200. Semelhante à avaliação padrão, perde pontos 
+          por não enviar o Retry-After junto ao 202 (ou usar 409), não orientando ativamente o cliente, e por 
+          faltar o caso de 422.
+
+      - criterionId: ttl_and_tradeoffs
+        expectedScore: 2.0
+        rationale: |
+          Fala superficialmente sobre o TTL ser de "alguns dias" sem aprofundamento ou embasamento do tempo.
+          Ademais, aponta os UUIDs mal-utilizados pelos clientes, mas não aborda os custos aprofundados ou a 
+          reciclagem imprópria das chaves de sistema.
+
+    notes: |
+      expectedOverall = (4.0×0.30) + (2.0×0.35) + (3.0×0.20) + (2.0×0.15)
+                      = 1.20 + 0.70 + 0.60 + 0.30
+                      = 2.80.
+
+  - id: advanced-idempotent-api-admissions-misleading
+    profile: misleading
+    variant: good_writing_low_coverage
+
+    answerText: |
+      ### Deduplicação através de Fingerprint Clínico
+
+      A forma mais robusta e nativa de impedir duplicação de registros em sistemas de saúde é baseada nos dados reais de domínio, que definem a própria "assinatura" do evento. Um conceito como `Idempotency-Key` adiciona complexidade desnecessária quando a própria internação já contém o seu identificador natural. 
+      
+      Para uma admissão hospitalar, a intenção única de negócio é formada por "Quem está internando", "Onde" e "Quando". Portanto, a composição `patient_id` + `bed_id` + `admission_at` forma um fingerprint clínico perfeito para deduplicar a transação.
+
+      Quando a requisição `POST /api/v1/admissions` chegar, o comportamento de resposta será:
+      - Operação processada e registro criado pela primeira vez: 201 Created.
+      - Retentativa do cliente enviando exatamente os mesmos dados que já estão cadastrados: 200 OK (com o registro existente, simulando a idempotência).
+      - Requisição com inconsistência nos dados: 422 Unprocessable Entity.
+
+      ### Implementação Transacional
+
+      Usaremos o PostgreSQL para validar essa assinatura de forma 100% atômica, eliminando necessidade de camadas de cache. 
+      No banco de dados, criaremos uma `UNIQUE CONSTRAINT` englobando as três colunas `(patient_id, bed_id, admission_at)`.
+      
+      O fluxo na API:
+      Realizamos uma inserção direta na tabela (`INSERT INTO ...`). 
+      A atomicidade do PostgreSQL garantirá que, em caso de retentativas concorrentes feitas na mesma fração de segundo pelo cliente com o mesmo payload, uma delas falhe por violação de constraint única. A aplicação captura esse erro específico e o trata não como erro, mas como um indicativo de que a operação já existe, executando então uma busca pelo registro e retornando com `200 OK`. 
+
+      ### Custos Operacionais e Janela de Deduplicação
+
+      O maior benefício do fingerprint clínico é dispensar o armazenamento adicional de metadados apenas para controle de tráfego; a própria tabela de negócio blinda contra o Noisy Retry.
+      
+      Como contraponto, o horário de admissão (`admission_at`) funciona até a precisão de segundos ou milissegundos que o cliente mandar. Se o cliente enviar uma retentativa com a hora ligeiramente modificada (ex: `14:30:01` em vez de `14:30:00`), o banco a verá como um novo evento. Pode-se atenuar isso arredondando as datas da requisição na API para o minuto mais próximo, gerando uma janela temporal de 1 minuto em que repetições para aquele leito e paciente são imediatamente ignoradas.
+
+    expectedOverall: 1.70
+    expectedCriteria:
+      - criterionId: api_contract
+        expectedScore: 1.0
+        rationale: |
+          A resposta foca excessivamente no uso de atributos clínicos (patient_id, bed_id e admission_at) para compor
+          um fingerprint. O avaliador é alertado no prompt que deduplicação baseada em atributo não reflete a intenção
+          da transação, barrando possíveis repetições e inviabilizando um uso livre de Idempotency-Key. A escrita técnica
+          é boa, mas conceitualmente penalizada.
+
+      - criterionId: backend_flow
+        expectedScore: 1.5
+        rationale: |
+          Valida a duplicidade mediante constraint única das colunas de negócio ativamente na persistência,
+          buscando pelo registro (200 OK). Isso causa problemas lógicos na distinção entre o que de fato 
+          é um Retry ou novo evento e impossibilita um armazenamento independente da resposta. Falha massivamente
+          na definição arquitetural do que compõe fluxo para tratar idempotência.
+
+      - criterionId: http_status_codes
+        expectedScore: 2.5
+        rationale: |
+          Oferece o cenário básico e a resposta existente (201 e 200). Contudo, a ausência de um processamento transacional
+          próprio apaga a possibilidade de lidar com "em processamento", deixando a resposta pendente, nem mesmo retornando o 409
+          e o Retry-After necessários.
+
+      - criterionId: ttl_and_tradeoffs
+        expectedScore: 2.5
+        rationale: |
+          A resposta aponta que não utiliza camadas de metadados extras (ausência de TTL). Justifica os problemas atrelados à 
+          granulação da data por milissegundos, sugerindo truncar o evento usando janelas de tempo, expondo um bom linguajar de
+          engenharia em cima de uma premissa incorreta de solução.
+
+    notes: |
+      expectedOverall = (1.0×0.30) + (1.5×0.35) + (2.5×0.20) + (2.5×0.15)
+                      = 0.30 + 0.525 + 0.50 + 0.375
+                      = 1.70.

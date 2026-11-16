@@ -1,0 +1,46 @@
+Avalie os TESTES DE COMPONENTE REACT da resposta do aluno para a questão abaixo.
+
+[QUESTÃO / ENUNCIADO]
+{{{enunciado}}}
+
+[RUBRICA DE AVALIAÇÃO]
+{{{rubrica}}}
+
+[PONTOS ESPERADOS NA RESPOSTA]
+{{{pontos_esperados}}}
+
+[RESPOSTA DO ALUNO]
+Código:
+{{{codigo}}}
+
+Justificativa:
+{{{raciocinio}}}
+
+[INSTRUÇÕES DE AVALIAÇÃO]
+- Atribua notas de 0 a 5 por critério (números decimais permitidos, ex - 4.0).
+- Verifique explicitamente:
+  (1) Pelo menos 5 testes implementados
+  (2) Teste de renderização inicial com verificação de valor padrão
+  (3) Teste de incremento com userEvent ou fireEvent
+  (4) Teste de decremento com userEvent ou fireEvent
+  (5) Teste de limite máximo (botão desabilitado ou valor não muda)
+  (6) Teste de reset (volta ao valor inicial)
+  (7) Uso de queries semânticas (getByRole preferido a getByTestId)
+  (8) Asserções específicas (toHaveTextContent, toBeDisabled, etc.)
+  (9) Estrutura com describe/it e nomes descritivos
+- Use "evidence" com trechos objetivos do código de testes.
+- Consistência: a soma ponderada dos critérios deve refletir a nota "overall".
+- Se não usa render do @testing-library/react, penalize em "rendering_tests".
+- Se não testa interações de usuário, penalize em "interaction_tests".
+
+[FORMATO DE SAÍDA — JSON]
+{
+  "overall": 0-5 (decimal),
+  "criteria": [
+    { "id": "rendering_tests",    "score": 0-5 (decimal), "weight": 0.35, "evidence": "…", "comment": "…" },
+    { "id": "interaction_tests",  "score": 0-5 (decimal), "weight": 0.40, "evidence": "…", "comment": "…" },
+    { "id": "assertions_quality", "score": 0-5 (decimal), "weight": 0.15, "evidence": "…", "comment": "…" },
+    { "id": "test_structure",     "score": 0-5 (decimal), "weight": 0.10, "evidence": "…", "comment": "…" }
+  ],
+  "feedback": "comentário geral focado na cobertura e qualidade técnica dos testes de componente"
+}

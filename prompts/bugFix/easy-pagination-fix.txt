@@ -1,0 +1,37 @@
+Avalie a correção de BUG da resposta do aluno para a questão abaixo usando a rubrica fornecida.
+
+[QUESTÃO / ENUNCIADO]
+{{{enunciado}}}
+
+[RUBRICA DE AVALIAÇÃO]
+{{{rubrica}}}
+
+[PONTOS ESPERADOS NA RESPOSTA]
+{{{pontos_esperados}}}
+
+[RESPOSTA DO ALUNO]
+Código:
+{{{codigo}}}
+
+Raciocínio:
+{{{raciocinio}}}
+
+[INSTRUÇÕES DE AVALIAÇÃO]
+- Atribua notas de 0 a 5 por critério (números decimais permitidos, ex.: 3.5).
+- Verifique explicitamente: (1) 1‑indexação do parâmetro `page`; (2) `totalPages = Math.ceil(total / pageSize)`; (3) clamping de `page` para `[1, totalPages]`; (4) tratamento de lista vazia.
+- Use "evidence" com trechos objetivos da resposta do aluno (citações curtas).
+- Consistência: a soma ponderada dos critérios deve refletir a nota "overall".
+- Se a resposta estiver vazia ou incoerente, explique por quê no feedback.
+
+[FORMATO DE SAÍDA — JSON]
+{
+  "overall": 0-5 (decimal),
+  "criteria": [
+    { "id": "root_cause",      "score": 0-5 (decimal), "weight": 0.35, "evidence": "…", "comment": "…" },
+    { "id": "functional_fix",  "score": 0-5 (decimal), "weight": 0.35, "evidence": "…", "comment": "…" },
+    { "id": "edge_cases",      "score": 0-5 (decimal), "weight": 0.15, "evidence": "…", "comment": "…" },
+    { "id": "explanation",     "score": 0-5 (decimal), "weight": 0.10, "evidence": "…", "comment": "…" },
+    { "id": "code_quality",    "score": 0-5 (decimal), "weight": 0.05, "evidence": "…", "comment": "…" }
+  ],
+  "feedback": "comentário geral conciso"
+}

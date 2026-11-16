@@ -1,0 +1,24 @@
+{
+  "runId": "review-v2-conservative__intermediate-payment-service-testability__intermediate-payment-service-testability-medium__60aa40ccbf",
+  "rawOutputs": [
+    {
+      "output": "{\n  \"overall\": 4.38,\n  \"criteria\": [\n    {\n      \"id\": \"dependency_isolation\",\n      \"score\": 5,\n      \"weight\": 0.35,\n      \"evidence\": [\n        \"class PaymentService { constructor(gateway, orderRepo) { this.gateway = gateway; this.orderRepo = orderRepo; }\",\n        \"gateway = { charge: vi.fn() };\",\n        \"orderRepo = { updateStatus: vi.fn().mockResolvedValue(undefined) };\",\n        \"service = new PaymentService(gateway, orderRepo);\"\n      ],\n      \"comment\": \"A avaliação inicial está correta. O aluno refatorou o `PaymentService` para receber as dependências via construtor e utilizou mocks adequadamente nos testes, isolando o serviço de dependências externas reais.\"\n    },\n    {\n      \"id\": \"behavior_coverage\",\n      \"score\": 5,\n      \"weight\": 0.3,\n      \"evidence\": [\n        \"it('retorna success true quando pagamento é aprovado', async () => { ... });\",\n        \"it('retorna success false quando gateway declina', async () => { ... });\",\n        \"it('propaga exceção quando gateway falha', async () => { ... });\"\n      ],\n      \"comment\": \"A avaliação inicial está correta. Todos os três cenários principais exigidos pela rubrica foram cobertos: caminho feliz, pagamento recusado e falha técnica no gateway.\"\n    },\n    {\n      \"id\": \"assertion_precision\",\n      \"score\": 3.5,\n      \"weight\": 0.2,\n      \"evidence\": [\n        \"expect(result.success).toBe(true);\",\n        \"expect(result.chargeId).toBe('ch_abc');\",\n        \"expect(orderRepo.updateStatus).toHaveBeenCalled();\",\n        \"expect(result.success).toBe(false);\",\n        \"expect(result.reason).toBe('insufficient_funds');\",\n        \"expect(orderRepo.updateStatus).toHaveBeenCalled();\",\n        \"await expect(service.processPayment('order-3', 1000, 'tok_err')).rejects.toThrow('Gateway timeout');\"\n      ],\n      \"comment\": \"A avaliação inicial identificou corretamente a falta de asserções mais precisas para os argumentos de `orderRepo.updateStatus` e a ausência da verificação `not.toHaveBeenCalled()` no caso de falha técnica. No entanto, a rubrica pede explicitamente 'o que NÃO deve ser chamado em caso de erro', e a resposta do aluno não inclui essa verificação. A nota inicial de 3 é um pouco baixa, pois o aluno fez as asserções de retorno e chamadas genéricas. Um ajuste para 3.5 reflete que há uma falha clara na asserção negativa, mas as outras asserções (mesmo que genéricas) estão presentes.\"\n    },\n    {\n      \"id\": \"test_structure\",\n      \"score\": 4.5,\n      \"weight\": 0.15,\n      \"evidence\": [\n        \"describe('PaymentService', () => { ... });\",\n        \"let gateway; let orderRepo; let service;\",\n        \"beforeEach(() => { ... });\",\n        \"gateway = { charge: vi.fn() };\",\n        \"orderRepo = { updateStatus: vi.fn().mockResolvedValue(undefined) };\",\n        \"service = new PaymentService(gateway, orderRepo);\"\n      ],\n      \"comment\": \"A avaliação inicial está correta. A estrutura dos testes é sólida, com uso adequado de `describe`, `it` e `beforeEach` para isolamento e organização. A menção de que os nomes poderiam ser mais específicos é uma sugestão de melhoria, mas não justifica uma penalidade maior, mantendo a nota de 4.5.\"\n    }\n  ],\n  \"feedback\": \"O aluno demonstrou um excelente entendimento da injeção de dependências para tornar o código testável, refatorando o `PaymentService` corretamente e utilizando mocks de forma eficaz. A cobertura dos cenários de teste (sucesso, recusa, falha técnica) está completa. A principal área para melhoria é a precisão das asserções. Nos testes de sucesso e recusa, é fundamental verificar não apenas que `orderRepo.updateStatus` foi chamado, mas também com quais argumentos específicos ele foi invocado. No teste de falha técnica, a inclusão de `expect(orderRepo.updateStatus).not.toHaveBeenCalled()` é crucial para garantir que o sistema não tente persistir um estado inválido após uma falha no gateway. A justificativa fornecida é clara e concisa, explicando bem o problema do código original e como a refatoração o resolve.\"\n}",
+      "model": "google/gemini-2.5-flash",
+      "callIndex": 1,
+      "metadata": {
+        "phase": "review_v2",
+        "promptVariant": "review-v2-conservative-audit",
+        "usage": {
+          "promptTokens": 3666,
+          "completionTokens": 1066,
+          "totalTokens": 4732,
+          "reasoningTokens": 0,
+          "cachedTokens": 0,
+          "cacheWriteTokens": 0,
+          "costCredits": 0.0037648,
+          "upstreamInferenceCost": 0.0037648
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,50 @@
+Avalie a correção de BUG da resposta do aluno para a questão abaixo usando a rubrica fornecida.
+
+[QUESTÃO / ENUNCIADO]
+{{{enunciado}}}
+
+[RUBRICA DE AVALIAÇÃO]
+{{{rubrica}}}
+
+[PONTOS ESPERADOS NA RESPOSTA]
+{{{pontos_esperados}}}
+
+[RESPOSTA DO ALUNO]
+Código:
+{{{codigo}}}
+
+Justificativa:
+{{{raciocinio}}}
+
+[INSTRUÇÕES DE AVALIAÇÃO]
+- Atribua notas de 0 a 5 por critério (números decimais permitidos, ex.: 3.5).
+- Verifique explicitamente:
+  (1) Identifica que a ausência de timeout é a causa da espera excessiva e que a falta de verificação de status HTTP/corpo causa falha pouco clara ou retorno inválido.
+  (2) Configura timeout explícito de forma idiomática na linguagem escolhida (AbortController+signal em JavaScript, timeout= em Python, connectTimeout/request timeout em Java) e trata timeout de forma distinta.
+  (3) Verifica o status HTTP da resposta e distingue erros 4xx (permanentes, sem retry) de erros 5xx (transitórios, com retry limitado).
+  (4) Trata erro de rede, JSON inválido ou ausência de rates[toCurrency] com erro claro, sem retornar undefined/None/null/NaN.
+  (5) Implementa no máximo 1 tentativa adicional para falhas transitórias (timeout, erro de rede ou 5xx), sem loop infinito, retry agressivo ou mascaramento de erros permanentes.
+  (6) Preserva o contrato público: retorna número válido em sucesso e lança/rejeita erro descritivo em falha.
+  (7) Discute trade-offs: latência adicional pelo retry, idempotência da chamada GET e limite de tentativas.
+- Use "evidence" com trechos objetivos do código (cite funções, exceções, constantes e mecanismos usados).
+- Consistência: a soma ponderada dos critérios deve refletir a nota "overall".
+- Se o código não configura timeout por tentativa, penalize fortemente em "timeout_fix".
+- Se o timeout existe mas o erro resultante não é tratado explicitamente, não atribua nota máxima em "timeout_fix" nem em "error_handling".
+- Não penalize soluções que não fazem retry para JSON inválido, corpo malformado ou ausência de rates[toCurrency]; esses casos podem ser tratados como falhas permanentes de contrato da resposta externa. O essencial é lançar erro claro e não retornar valor vazio.
+- Em JavaScript, lembre que fetch não lança erro automaticamente para HTTP 4xx/5xx; a solução deve verificar response.ok/status explicitamente. Se a resposta trata apenas exceções de rede/timeout e ignora status HTTP, penalize em "error_handling".
+- Se o aluno implementa retry sem limite, em loop infinito ou para HTTP 4xx, penalize fortemente em "retry_strategy".
+- Se a solução engole erro silenciosamente ou retorna valor vazio fora do contrato, penalize fortemente em "error_handling" e "retry_strategy", conforme aplicável.
+
+
+[FORMATO DE SAÍDA — JSON]
+{
+  "overall": 0-5 (decimal),
+  "criteria": [
+    { "id": "root_cause",     "score": 0-5 (decimal), "weight": 0.25, "evidence": "...", "comment": "..." },
+    { "id": "timeout_fix",    "score": 0-5 (decimal), "weight": 0.30, "evidence": "...", "comment": "..." },
+    { "id": "error_handling", "score": 0-5 (decimal), "weight": 0.20, "evidence": "...", "comment": "..." },
+    { "id": "retry_strategy", "score": 0-5 (decimal), "weight": 0.15, "evidence": "...", "comment": "..." },
+    { "id": "explanation",    "score": 0-5 (decimal), "weight": 0.10, "evidence": "...", "comment": "..." }
+  ],
+  "feedback": "comentário geral conciso focado em timeout, tratamento de falhas externas, retry controlado e preservação do contrato"
+}

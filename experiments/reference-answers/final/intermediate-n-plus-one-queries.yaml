@@ -1,0 +1,327 @@
+questionSlug: intermediate-n-plus-one-queries
+
+answers:
+  - id: intermediate-n-plus-one-queries-strong
+    profile: strong
+    variant: complete_correct
+    language: javascript
+
+    code: |
+      // invoice-service.js
+
+      const db = {
+        query: async (sql, params = []) => {
+          console.log('DB QUERY:', sql, params);
+          return [];
+        },
+      };
+
+      async function getInvoicesWithCustomers() {
+        // Query 1: busca as faturas
+        const invoices = await db.query(
+          'SELECT * FROM invoices ORDER BY date DESC LIMIT 100'
+        );
+
+        if (invoices.length === 0) {
+          return [];
+        }
+
+        // Extrai customer_ids únicos para evitar queries redundantes
+        const uniqueIds = [...new Set(invoices.map(i => i.customer_id))];
+
+        // Query 2: busca todos os clientes relevantes em lote com IN
+        const placeholders = uniqueIds.map(() => '?').join(', ');
+        const customers = await db.query(
+          `SELECT * FROM customers WHERE id IN (${placeholders})`,
+          uniqueIds
+        );
+
+        // Constrói mapa customer_id → customer para acesso O(1)
+        const customerMap = new Map(customers.map(c => [c.id, c]));
+
+        // Associa cliente a cada fatura em O(N)
+        for (const invoice of invoices) {
+          invoice.customer = customerMap.get(invoice.customer_id) ?? null;
+        }
+
+        return invoices;
+      }
+
+      module.exports = { getInvoicesWithCustomers };
+
+    justification: |
+      1. Causa raiz do N+1:
+      O código original executa db.query dentro do loop for...of: para cada uma das
+      N faturas, dispara uma query individual ao banco (SELECT WHERE id = ?). Somada
+      à query inicial de faturas, o total é N+1 idas ao banco. Para 100 faturas,
+      são 101 queries. O problema é agravado por IDs repetidos: o mesmo cliente pode
+      ser buscado múltiplas vezes, desperdiçando I/O adicional.
+
+      2. Extração de IDs únicos e query em lote:
+      Usei new Set(invoices.map(i => i.customer_id)) para coletar apenas os
+      customer_ids distintos, eliminando duplicatas. Em seguida, montei dinamicamente
+      a lista de placeholders (?) e executei uma única query com IN, reduzindo o
+      total de queries para 2 independentemente do volume de faturas.
+
+      3. Mapa para associação em memória:
+      Construí um Map com new Map(customers.map(c => [c.id, c])): para cada cliente
+      retornado, a chave é o id e o valor é o objeto completo. Isso permite buscar o
+      cliente de qualquer fatura com customerMap.get(invoice.customer_id) em tempo O(1).
+
+      4. Por que O(N) e não O(N²):
+      Com o Map, o loop de associação executa um get por fatura — operação O(1)
+      amortizada. O total do passo de associação é O(N). Sem o Map, usar
+      customers.find(c => c.id === invoice.customer_id) dentro do loop seria O(N)
+      por fatura, resultando em O(N²) no total. Para N=100, a diferença é 100 vs
+      10.000 operações no pior caso.
+
+    expectedOverall: 5.0
+    expectedCriteria:
+      - criterionId: root_cause
+        expectedScore: 5.0
+        rationale: |
+          A justificativa identifica explicitamente que o db.query dentro do loop
+          gera uma query por fatura (N queries) mais a query inicial, totalizando
+          N+1. Menciona também o problema de IDs repetidos causando queries
+          redundantes. Diagnóstico completo e preciso.
+
+      - criterionId: batching_fix
+        expectedScore: 5.0
+        rationale: |
+          IDs únicos extraídos com new Set + spread. Placeholders gerados
+          dinamicamente (uniqueIds.map(() => '?').join(', ')). Query IN executada
+          uma única vez. Lista vazia tratada com retorno antecipado. Implementação
+          correta e completa conforme o contrato da questão: exatamente 2 queries
+          no caso normal, 1 query para lista vazia.
+
+      - criterionId: memory_join
+        expectedScore: 5.0
+        rationale: |
+          Map construído com new Map(customers.map(c => [c.id, c])): construção
+          O(N) e lookup O(1). Loop de associação usa customerMap.get() — sem
+          find/filter aninhado. A justificativa explica explicitamente a diferença
+          entre O(N) com Map e O(N²) com find dentro do loop. Implementação e
+          explicação completas.
+
+      - criterionId: contract_preservation
+        expectedScore: 5.0
+        rationale: |
+          A função mantém a assinatura pública getInvoicesWithCustomers(), retorna
+          a lista de faturas com invoice.customer preenchido e usa null como fallback
+          quando não há cliente correspondente. Para lista vazia, retorna []
+          imediatamente sem executar a segunda query, o que é compatível com o
+          contrato da questão.
+
+    notes: |
+      expectedOverall = (5.0×0.25) + (5.0×0.35) + (5.0×0.25) + (5.0×0.15)
+                      = 1.25 + 1.75 + 1.25 + 0.75
+                      = 5.0.
+
+  - id: intermediate-n-plus-one-queries-medium
+    profile: medium
+    variant: partial_correct
+    language: javascript
+
+    code: |
+      // invoice-service.js
+
+      const db = {
+        query: async (sql, params = []) => {
+          console.log('DB QUERY:', sql, params);
+          return [];
+        },
+      };
+
+      async function getInvoicesWithCustomers() {
+        const invoices = await db.query(
+          'SELECT * FROM invoices ORDER BY date DESC LIMIT 100'
+        );
+
+        const customerIds = invoices.map(i => i.customer_id);
+        const uniqueIds   = [...new Set(customerIds)];
+
+        if (uniqueIds.length === 0) {
+          return invoices;
+        }
+
+        const placeholders = uniqueIds.map(() => '?').join(', ');
+        const customers = await db.query(
+          `SELECT * FROM customers WHERE id IN (${placeholders})`,
+          uniqueIds
+        );
+
+        // Associa cada fatura ao seu cliente buscando na lista
+        for (const invoice of invoices) {
+          invoice.customer = customers.find(c => c.id === invoice.customer_id) || null;
+        }
+
+        return invoices;
+      }
+
+      module.exports = { getInvoicesWithCustomers };
+
+    justification: |
+      O problema do código original é que ele executa uma query de banco de dados
+      dentro do loop, o que gera N queries adicionais para N faturas — somando
+      N+1 ao total. Isso é lento porque cada query tem latência de rede e disco.
+
+      A solução foi executar a query de clientes em lote: extraio os customer_ids
+      das faturas, removo duplicatas com Set e faço uma única query com IN passando
+      todos os IDs de uma vez. Com isso, o total de queries cai de N+1 para 2.
+
+      Para associar os clientes às faturas, percorro o array de invoices e uso
+      customers.find() para encontrar o cliente correspondente pelo id.
+
+    expectedOverall: 3.88
+    expectedCriteria:
+      - criterionId: root_cause
+        expectedScore: 4.0
+        rationale: |
+          Identifica corretamente que o loop gera N queries adicionais e nomeia o
+          problema como N+1. Também menciona latência de rede e disco como
+          consequência. A nota não é máxima porque a justificativa não discute o
+          efeito de customer_ids repetidos gerando buscas redundantes, mas o
+          diagnóstico central está correto.
+
+      - criterionId: batching_fix
+        expectedScore: 5.0
+        rationale: |
+          Extrai IDs únicos com Set, gera placeholders dinamicamente, executa uma
+          única query com IN. Trata lista vazia retornando invoices sem executar
+          a segunda query. Implementação de batching correta e completa.
+
+      - criterionId: memory_join
+        expectedScore: 1.5
+        rationale: |
+          A associação usa customers.find(c => c.id === invoice.customer_id) dentro
+          do loop for...of sobre invoices. Isso é O(N) por fatura e O(N²) no total:
+          para cada uma das N faturas, percorre até N clientes. O batching eliminou
+          o gargalo de I/O, mas introduziu um gargalo algorítmico em memória. A
+          justificativa não menciona complexidade e não constrói mapa — o critério
+          central de memory_join não é atendido.
+
+      - criterionId: contract_preservation
+        expectedScore: 5.0
+        rationale: |
+          A função mantém a assinatura pública, retorna a lista de faturas com
+          invoice.customer preenchido e usa null como fallback. Para lista vazia,
+          retornar invoices (que já é []) é equivalente a retornar [] e compatível
+          com o contrato da questão. Contrato totalmente preservado.
+
+    notes: |
+      expectedOverall = (4.0×0.25) + (5.0×0.35) + (1.5×0.25) + (5.0×0.15)
+                      = 1.00 + 1.75 + 0.375 + 0.75
+                      = 3.875 → arredondado para 3.88.
+
+  - id: intermediate-n-plus-one-queries-misleading
+    profile: misleading
+    variant: good_writing_low_coverage
+    language: javascript
+
+    code: |
+      // invoice-service.js
+
+      const db = {
+        query: async (sql, params = []) => {
+          console.log('DB QUERY:', sql, params);
+          return [];
+        },
+      };
+
+      async function getInvoicesWithCustomers() {
+        // Busca faturas já com os dados do cliente usando JOIN —
+        // elimina completamente o problema de N+1 com uma única query.
+        const rows = await db.query(`
+          SELECT
+            i.id,
+            i.amount,
+            i.date,
+            i.customer_id,
+            c.id          AS customer_id_ref,
+            c.name        AS customer_name,
+            c.email       AS customer_email
+          FROM invoices i
+          INNER JOIN customers c ON c.id = i.customer_id
+          ORDER BY i.date DESC
+          LIMIT 100
+        `);
+
+        // Reconstrói o formato esperado: fatura com objeto customer aninhado
+        return rows.map(row => ({
+          id:          row.id,
+          amount:      row.amount,
+          date:        row.date,
+          customer_id: row.customer_id,
+          customer: {
+            id:    row.customer_id_ref,
+            name:  row.customer_name,
+            email: row.customer_email,
+          },
+        }));
+      }
+
+      module.exports = { getInvoicesWithCustomers };
+
+    justification: |
+      O problema é clássico de N+1 queries: o código original executa uma query
+      separada para cada fatura dentro do loop, resultando em 1 (faturas) + N
+      (clientes) queries totais. Para 100 faturas, isso significa 101 roundtrips
+      ao banco, cada um com latência de rede e disco.
+
+      A solução mais eficiente é usar um JOIN no SQL para trazer os dados de fatura
+      e cliente em uma única query. Isso reduz o número de queries de N+1 para
+      apenas 1, que é ainda melhor do que o batching com IN (2 queries). O banco
+      de dados já é otimizado para fazer JOINs eficientemente com índices.
+
+      Além disso, o JOIN é mais simples de manter: não precisa de lógica em memória
+      para associar dados — o banco faz esse trabalho. A solução também elimina o
+      risco de buscar IDs duplicados, já que o JOIN trata cada linha corretamente.
+
+    expectedOverall: 2.18
+    expectedCriteria:
+      - criterionId: root_cause
+        expectedScore: 5.0
+        rationale: |
+          A justificativa identifica corretamente o N+1: query inicial de faturas
+          mais uma query por fatura no loop, totalizando N+1. Menciona latência de
+          rede e disco. Usa a terminologia correta. O diagnóstico é preciso e
+          completo — o problema central está corretamente identificado.
+
+      - criterionId: batching_fix
+        expectedScore: 1.0
+        rationale: |
+          A solução usa JOIN em vez de batching em duas etapas com IN. O prompt
+          de avaliação é explícito: "Não trate soluções com JOIN como resposta
+          plenamente correta nesta questão, mesmo que eliminem N+1. O enunciado
+          exige especificamente batching em duas etapas: buscar faturas, buscar
+          clientes com IN e associar em memória com mapa." A solução faz exatamente
+          1 query no total, não 2, e não usa cláusula IN. Penalização forte.
+
+      - criterionId: memory_join
+        expectedScore: 0.5
+        rationale: |
+          Não há associação em memória: o JOIN delega ao banco toda a lógica de
+          associação. Não existe construção de mapa, não existe loop de associação.
+          O critério avalia especificamente a construção de dicionário/mapa com
+          complexidade O(N) para associar clientes às faturas em memória — nada
+          disso está presente. Nota mínima porque há pelo menos um rows.map()
+          para reconstruir o formato de saída.
+
+      - criterionId: contract_preservation
+        expectedScore: 3.0
+        rationale: |
+          A solução tenta reconstruir o formato de saída com uma fatura contendo
+          customer aninhado, mas preserva o contrato apenas parcialmente. O uso de
+          INNER JOIN pode remover faturas que não tenham cliente correspondente,
+          enquanto o fluxo esperado deveria manter a fatura e associar customer como
+          null/ausente. Além disso, o SELECT reconstrói manualmente apenas alguns
+          campos do cliente (name, email), podendo omitir campos reais retornados
+          pelo contrato original.
+
+    notes: |
+      expectedOverall = (5.0×0.25) + (1.0×0.35) + (0.5×0.25) + (3.0×0.15)
+                      = 1.25 + 0.35 + 0.125 + 0.45
+                      = 2.175 → arredondado para 2.18.
+      A resposta é misleading: diagnóstico perfeito, texto convincente, mas JOIN
+      é explicitamente excluído como solução correta pelo prompt de avaliação.
+      Falha nos dois critérios de maior peso (batching_fix 0.35 e memory_join 0.25).

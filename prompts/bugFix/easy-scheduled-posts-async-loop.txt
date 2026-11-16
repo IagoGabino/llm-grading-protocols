@@ -1,0 +1,42 @@
+Avalie a correção de BUG da resposta do aluno para a questão abaixo usando a rubrica fornecida.
+
+[QUESTÃO / ENUNCIADO]
+{{{enunciado}}}
+
+[RUBRICA DE AVALIAÇÃO]
+{{{rubrica}}}
+
+[PONTOS ESPERADOS NA RESPOSTA]
+{{{pontos_esperados}}}
+
+[RESPOSTA DO ALUNO]
+Código:
+{{{codigo}}}
+
+Raciocínio:
+{{{raciocinio}}}
+
+[INSTRUÇÕES DE AVALIAÇÃO]
+- Atribua notas de 0 a 5 por critério (números decimais permitidos, ex.: 3.5).
+- Verifique explicitamente:
+  (1) se o aluno identifica que `forEach` (JavaScript) não aguarda callbacks async — cada iteração dispara uma Promise que é ignorada pelo `forEach`, fazendo a função retornar `{ published: 0, failed: 0 }` imediatamente; ou que `asyncio.create_task` (Python) não suspende a coroutine atual, permitindo que o `return` execute antes de qualquer publicação terminar;
+  (2) se a correção substitui o loop problemático por uma construção que aguarda corretamente todas as operações assíncronas — `Promise.all`/`Promise.allSettled` com `map`, `for...of` com `await`, `asyncio.gather`, ou laço com `await` e `try/except`; aceite qualquer mecanismo correto para a linguagem escolhida;
+  (3) se erros individuais de publicação são tratados explicitamente, de forma que uma falha incremente `failed` sem interromper as demais publicações e sem ser silenciada (não deve haver um `catch` vazio sem contabilizar a falha);
+  (4) se o contrato de retorno `{ published, failed }` é preservado — a função retorna o objeto apenas após todas as operações terminarem, com os contadores refletindo os resultados reais;
+  (5) se o aluno explica em linguagem clara por que a versão original retorna antecipadamente e como a correção garante que o `return` ocorra somente após todas as publicações serem concluídas.
+- Use "evidence" com trechos objetivos da resposta do aluno (citações curtas do código ou do raciocínio).
+- Consistência: a soma ponderada dos critérios deve refletir a nota "overall".
+- Se a resposta estiver vazia ou incoerente, explique por quê no feedback.
+
+[FORMATO DE SAÍDA — JSON]
+{
+  "overall": 0-5 (decimal),
+  "criteria": [
+    { "id": "root_cause",           "score": 0-5 (decimal), "weight": 0.30, "evidence": "…", "comment": "…" },
+    { "id": "async_fix",            "score": 0-5 (decimal), "weight": 0.35, "evidence": "…", "comment": "…" },
+    { "id": "error_handling",       "score": 0-5 (decimal), "weight": 0.20, "evidence": "…", "comment": "…" },
+    { "id": "contract_preservation","score": 0-5 (decimal), "weight": 0.10, "evidence": "…", "comment": "…" },
+    { "id": "explanation",          "score": 0-5 (decimal), "weight": 0.05, "evidence": "…", "comment": "…" }
+  ],
+  "feedback": "comentário geral conciso"
+}

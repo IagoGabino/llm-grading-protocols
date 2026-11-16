@@ -1,0 +1,168 @@
+{
+  "multiAggregate": {
+    "availableRuns": 24,
+    "unavailableRuns": 0,
+    "byCriterion": {
+      "api_contract": {
+        "samples": 3,
+        "avgStdDev": 0.1571,
+        "maxStdDev": 0.2357
+      },
+      "backend_flow": {
+        "samples": 3,
+        "avgStdDev": 0,
+        "maxStdDev": 0
+      },
+      "http_status_codes": {
+        "samples": 3,
+        "avgStdDev": 0.2357,
+        "maxStdDev": 0.4714
+      },
+      "ttl_and_tradeoffs": {
+        "samples": 3,
+        "avgStdDev": 0.0786,
+        "maxStdDev": 0.2357
+      },
+      "isolamento": {
+        "samples": 3,
+        "avgStdDev": 0.0786,
+        "maxStdDev": 0.2357
+      },
+      "circuit_breaker": {
+        "samples": 3,
+        "avgStdDev": 0.2357,
+        "maxStdDev": 0.4714
+      },
+      "retry_e_dlq": {
+        "samples": 3,
+        "avgStdDev": 0.2721,
+        "maxStdDev": 0.4082
+      },
+      "tradeoffs": {
+        "samples": 3,
+        "avgStdDev": 0.3928,
+        "maxStdDev": 0.4714
+      },
+      "responsibility_identification": {
+        "samples": 3,
+        "avgStdDev": 0.3143,
+        "maxStdDev": 0.4714
+      },
+      "function_extraction": {
+        "samples": 3,
+        "avgStdDev": 0.1571,
+        "maxStdDev": 0.2357
+      },
+      "behavior_preservation": {
+        "samples": 6,
+        "avgStdDev": 0.1178,
+        "maxStdDev": 0.2357
+      },
+      "coupling_reduction": {
+        "samples": 3,
+        "avgStdDev": 0,
+        "maxStdDev": 0
+      },
+      "reasoning": {
+        "samples": 6,
+        "avgStdDev": 0.0786,
+        "maxStdDev": 0.4714
+      },
+      "root_cause": {
+        "samples": 6,
+        "avgStdDev": 0.1179,
+        "maxStdDev": 0.4714
+      },
+      "timeout_fix": {
+        "samples": 3,
+        "avgStdDev": 0,
+        "maxStdDev": 0
+      },
+      "error_handling": {
+        "samples": 3,
+        "avgStdDev": 0.1572,
+        "maxStdDev": 0.2357
+      },
+      "retry_strategy": {
+        "samples": 3,
+        "avgStdDev": 0.1572,
+        "maxStdDev": 0.2357
+      },
+      "explanation": {
+        "samples": 3,
+        "avgStdDev": 0.1571,
+        "maxStdDev": 0.4714
+      },
+      "root_cause_diagnosis": {
+        "samples": 3,
+        "avgStdDev": 0,
+        "maxStdDev": 0
+      },
+      "teardown_implementation": {
+        "samples": 3,
+        "avgStdDev": 0,
+        "maxStdDev": 0
+      },
+      "determinism": {
+        "samples": 3,
+        "avgStdDev": 0.0786,
+        "maxStdDev": 0.2357
+      },
+      "conceptual_justification": {
+        "samples": 3,
+        "avgStdDev": 0.0786,
+        "maxStdDev": 0.2357
+      },
+      "batching_fix": {
+        "samples": 3,
+        "avgStdDev": 0,
+        "maxStdDev": 0
+      },
+      "memory_join": {
+        "samples": 3,
+        "avgStdDev": 0.1571,
+        "maxStdDev": 0.4714
+      },
+      "contract_preservation": {
+        "samples": 3,
+        "avgStdDev": 0.3143,
+        "maxStdDev": 0.9428
+      },
+      "duplication_identification": {
+        "samples": 3,
+        "avgStdDev": 0.3143,
+        "maxStdDev": 0.4714
+      },
+      "abstraction_extraction": {
+        "samples": 3,
+        "avgStdDev": 0.2147,
+        "maxStdDev": 0.4082
+      },
+      "public_signature_preservation": {
+        "samples": 3,
+        "avgStdDev": 0,
+        "maxStdDev": 0
+      },
+      "dependency_isolation": {
+        "samples": 3,
+        "avgStdDev": 0,
+        "maxStdDev": 0
+      },
+      "behavior_coverage": {
+        "samples": 3,
+        "avgStdDev": 0.1571,
+        "maxStdDev": 0.4714
+      },
+      "assertion_precision": {
+        "samples": 3,
+        "avgStdDev": 0.3143,
+        "maxStdDev": 0.4714
+      },
+      "test_structure": {
+        "samples": 3,
+        "avgStdDev": 0.0786,
+        "maxStdDev": 0.2357
+      }
+    }
+  }
+}

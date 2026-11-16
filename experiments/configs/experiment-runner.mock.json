@@ -1,0 +1,15 @@
+{
+    "experimentId": "poc-ii-mock-smoke",
+    "model": "mock/evaluator-v1",
+    "promptVersion": "experiment-runner-v1",
+    "enabledStrategies": ["single", "review", "multi_aggregate"],
+    "referenceAnswersPath": "experiments/reference-answers/final",
+    "outputDir": "experiments/results/experiment-runs",
+    "execution": {
+        "useMock": true,
+        "timeoutMs": 10000,
+        "retryLimit": 0,
+        "concurrency": 1,
+        "overwrite": true
+    }
+}

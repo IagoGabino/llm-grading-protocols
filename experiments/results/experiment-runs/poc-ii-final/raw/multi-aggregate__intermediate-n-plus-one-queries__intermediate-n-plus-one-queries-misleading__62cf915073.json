@@ -1,0 +1,68 @@
+{
+  "runId": "multi-aggregate__intermediate-n-plus-one-queries__intermediate-n-plus-one-queries-misleading__62cf915073",
+  "rawOutputs": [
+    {
+      "output": "{\n  \"overall\": 1.0,\n  \"criteria\": [\n    {\n      \"id\": \"root_cause\",\n      \"score\": 5.0,\n      \"weight\": 0.25,\n      \"evidence\": [\n        \"O problema é clássico de N+1 queries: o código original executa uma query separada para cada fatura dentro do loop, resultando em 1 (faturas) + N (clientes) queries totais. Para 100 faturas, isso significa 101 roundtrips ao banco, cada um com latência de rede e disco.\"\n      ],\n      \"comment\": \"O aluno identificou corretamente a causa raiz do problema N+1 queries e explicou o impacto na performance.\"\n    },\n    {\n      \"id\": \"batching_fix\",\n      \"score\": 0.0,\n      \"weight\": 0.35,\n      \"evidence\": [\n        \"SELECT i.id, i.amount, i.date, i.customer_id, c.id AS customer_id_ref, c.name AS customer_name, c.email AS customer_email FROM invoices i INNER JOIN customers c ON c.id = i.customer_id ORDER BY i.date DESC LIMIT 100\"\n      ],\n      \"comment\": \"O aluno não implementou a solução de batching com IN. Em vez disso, utilizou um JOIN SQL, que, embora resolva o problema de N+1 queries, não atende ao requisito específico de realizar 2 queries (uma para faturas e outra para clientes com IN) e associar em memória.\"\n    },\n    {\n      \"id\": \"memory_join\",\n      \"score\": 0.0,\n      \"weight\": 0.25,\n      \"evidence\": [\n        \"A solução mais eficiente é usar um JOIN no SQL para trazer os dados de fatura e cliente em uma única query. Isso reduz o número de queries de N+1 para apenas 1, que é ainda melhor do que o batching com IN (2 queries). O banco de dados já é otimizado para fazer JOINs eficientemente com índices. Além disso, o JOIN é mais simples de manter: não precisa de lógica em memória para associar dados — o banco faz esse trabalho.\"\n      ],\n      \"comment\": \"O aluno não implementou a associação em memória com complexidade O(N) usando um mapa/dicionário, pois optou por uma solução baseada em JOIN SQL, que realiza a associação no banco de dados.\"\n    },\n    {\n      \"id\": \"contract_preservation\",\n      \"score\": 5.0,\n      \"weight\": 0.15,\n      \"evidence\": [\n        \"return rows.map(row => ({ id: row.id, amount: row.amount, date: row.date, customer_id: row.customer_id, customer: { id: row.customer_id_ref, name: row.customer_name, email: row.customer_email } }))\"\n      ],\n      \"comment\": \"A função `getInvoicesWithCustomers` mantém a assinatura pública e o formato de retorno esperado, com a propriedade `customer` preenchida dentro de cada objeto de fatura.\"\n    }\n  ],\n  \"feedback\": \"O aluno identificou corretamente a causa raiz do problema N+1 queries. No entanto, a solução proposta com JOIN SQL, embora eficaz para eliminar o N+1, não atende aos requisitos específicos da questão de implementar batching com IN para buscar clientes em uma segunda query e realizar a associação em memória com um mapa para garantir complexidade O(N). A preservação do contrato de saída foi mantida.\"\n}",
+      "model": "google/gemini-2.5-flash",
+      "callIndex": 1,
+      "metadata": {
+        "engineStatus": "success",
+        "usage": {
+          "promptTokens": 3071,
+          "completionTokens": 819,
+          "totalTokens": 3890,
+          "reasoningTokens": 0,
+          "cachedTokens": 0,
+          "cacheWriteTokens": 0,
+          "costCredits": 0.0029688,
+          "upstreamInferenceCost": 0.0029688
+        },
+        "subcallIndex": 1,
+        "promptVariantId": "rubric_adherence",
+        "promptVariantInstruction": "Nesta avaliação, priorize a aderência estrita à rubrica. Atribua os scores considerando cuidadosamente os critérios, descritores e pesos definidos. Penalize respostas que pareçam boas de forma geral, mas que não atendam explicitamente ao que o critério avalia. Não use critérios externos à rubrica."
+      }
+    },
+    {
+      "output": "{\n  \"overall\": 1.0,\n  \"criteria\": [\n    {\n      \"id\": \"root_cause\",\n      \"score\": 4.0,\n      \"weight\": 0.25,\n      \"evidence\": [\n        \"O problema é clássico de N+1 queries: o código original executa uma query separada para cada fatura dentro do loop, resultando em 1 (faturas) + N (clientes) queries totais. Para 100 faturas, isso significa 101 roundtrips ao banco, cada um com latência de rede e disco.\"\n      ],\n      \"comment\": \"O aluno identifica corretamente a causa raiz do problema N+1 queries e explica o impacto na performance.\"\n    },\n    {\n      \"id\": \"batching_fix\",\n      \"score\": 0.0,\n      \"weight\": 0.35,\n      \"evidence\": [\n        \"A solução mais eficiente é usar um JOIN no SQL para trazer os dados de fatura e cliente em uma única query. Isso reduz o número de queries de N+1 para apenas 1, que é ainda melhor do que o batching com IN (2 queries).\"\n      ],\n      \"comment\": \"O aluno optou por uma solução de JOIN no SQL, que, embora resolva o problema de N+1 queries, não segue a abordagem de batching com IN e associação em memória solicitada no enunciado. A rubrica explicitamente pede para não tratar soluções com JOIN como plenamente corretas para este critério.\"\n    },\n    {\n      \"id\": \"memory_join\",\n      \"score\": 0.0,\n      \"weight\": 0.25,\n      \"evidence\": [\n        \"A solução também elimina o risco de buscar IDs duplicados, já que o JOIN trata cada linha corretamente.\"\n      ],\n      \"comment\": \"A solução do aluno utiliza um JOIN no banco de dados, eliminando a necessidade de associação em memória com um mapa, conforme solicitado na rubrica. Portanto, este critério não foi atendido.\"\n    },\n    {\n      \"id\": \"contract_preservation\",\n      \"score\": 3.0,\n      \"weight\": 0.15,\n      \"evidence\": [\n        \"// Reconstrói o formato esperado: fatura com objeto customer aninhado\",\n        \"return rows.map(row => ({ id: row.id, amount: row.amount, date: row.date, customer_id: row.customer_id, customer: { id: row.customer_id_ref, name: row.customer_name, email: row.customer_email } }));\"\n      ],\n      \"comment\": \"O aluno preserva o formato de saída esperado, aninhando os dados do cliente dentro da fatura. No entanto, a assinatura pública da função foi mantida, mas a implementação interna diverge significativamente da abordagem esperada (batching com IN e associação em memória).\"\n    }\n  ],\n  \"feedback\": \"A identificação da causa raiz do problema N+1 queries foi bem feita. No entanto, a solução implementada com JOIN no SQL, embora eficaz para resolver o N+1, não seguiu as instruções específicas do enunciado que pediam uma abordagem de batching com IN e associação em memória usando um mapa. Isso resultou em pontuação baixa nos critérios de 'Implementação de batching com IN' e 'Associação em memória com complexidade O(N)'. A preservação do contrato de saída foi parcialmente atendida, pois o formato final está correto, mas a forma de obtê-lo não.\"\n}",
+      "model": "google/gemini-2.5-flash",
+      "callIndex": 2,
+      "metadata": {
+        "engineStatus": "success",
+        "usage": {
+          "promptTokens": 3065,
+          "completionTokens": 793,
+          "totalTokens": 3858,
+          "reasoningTokens": 0,
+          "cachedTokens": 0,
+          "cacheWriteTokens": 0,
+          "costCredits": 0.002902,
+          "upstreamInferenceCost": 0.002902
+        },
+        "subcallIndex": 2,
+        "promptVariantId": "textual_evidence",
+        "promptVariantInstruction": "Nesta avaliação, priorize evidências textuais presentes na resposta avaliada. Ao atribuir os scores, considere principalmente o que está explicitamente demonstrado no texto. Evite inferir conhecimento implícito quando ele não estiver sustentado por trechos, argumentos, exemplos ou explicações presentes na resposta."
+      }
+    },
+    {
+      "output": "{\n  \"overall\": 1.0,\n  \"criteria\": [\n    {\n      \"id\": \"root_cause\",\n      \"score\": 5.0,\n      \"weight\": 0.25,\n      \"evidence\": [\n        \"O problema é clássico de N+1 queries: o código original executa uma query separada para cada fatura dentro do loop, resultando em 1 (faturas) + N (clientes) queries totais. Para 100 faturas, isso significa 101 roundtrips ao banco, cada um com latência de rede e disco.\"\n      ],\n      \"comment\": \"O aluno identificou corretamente a causa raiz do problema N+1 queries, explicando a quantidade de queries e o impacto na performance.\"\n    },\n    {\n      \"id\": \"batching_fix\",\n      \"score\": 0.0,\n      \"weight\": 0.35,\n      \"evidence\": [\n        \"A solução mais eficiente é usar um JOIN no SQL para trazer os dados de fatura e cliente em uma única query. Isso reduz o número de queries de N+1 para apenas 1, que é ainda melhor do que o batching com IN (2 queries).\",\n        \"SELECT i.id, i.amount, i.date, i.customer_id, c.id AS customer_id_ref, c.name AS customer_name, c.email AS customer_email FROM invoices i INNER JOIN customers c ON c.id = i.customer_id ORDER BY i.date DESC LIMIT 100\"\n      ],\n      \"comment\": \"O aluno optou por uma solução de JOIN no SQL, que, embora resolva o problema de N+1 queries, não segue a abordagem de 'batching com IN' e '2 queries' explicitamente solicitada no enunciado. A rubrica instrui a não tratar soluções com JOIN como plenamente corretas para este critério, pois o foco era a implementação de batching em duas etapas com IN.\"\n    },\n    {\n      \"id\": \"memory_join\",\n      \"score\": 0.0,\n      \"weight\": 0.25,\n      \"evidence\": [\n        \"A solução mais eficiente é usar um JOIN no SQL para trazer os dados de fatura e cliente em uma única query.\",\n        \"O banco de dados já é otimizado para fazer JOINs eficientemente com índices. Além disso, o JOIN é mais simples de manter: não precisa de lógica em memória para associar dados — o banco faz esse trabalho.\"\n      ],\n      \"comment\": \"O aluno não implementou a associação em memória com complexidade O(N) usando um mapa, pois a solução adotada foi um JOIN no banco de dados, que realiza a associação no lado do servidor. A rubrica esperava uma solução que construísse um mapa em memória para a associação.\"\n    },\n    {\n      \"id\": \"contract_preservation\",\n      \"score\": 3.0,\n      \"weight\": 0.15,\n      \"evidence\": [\n        \"return rows.map(row => ({ id: row.id, amount: row.amount, date: row.date, customer_id: row.customer_id, customer: { id: row.customer_id_ref, name: row.customer_name, email: row.customer_email } }))\"\n      ],\n      \"comment\": \"A função preserva a assinatura pública e o formato de retorno esperado, com a propriedade 'customer' preenchida. No entanto, a solução com JOIN altera a forma como os dados são obtidos, o que, embora funcional, não segue a abordagem de processamento em memória esperada para este critério.\"\n    }\n  ],\n  \"feedback\": \"O aluno demonstrou um bom entendimento da causa raiz do problema N+1 queries. Contudo, a solução implementada com um JOIN no SQL, embora eficaz para resolver o N+1, não seguiu as instruções específicas do enunciado que pediam uma abordagem de batching com duas queries (uma para faturas, outra para clientes com IN) e associação em memória usando um mapa. Isso resultou em pontuações baixas nos critérios de 'Implementação de batching com IN' e 'Associação em memória com complexidade O(N)'. Para futuras questões, é crucial aderir estritamente aos requisitos de implementação, mesmo que existam outras soluções válidas para o problema.\"\n}",
+      "model": "google/gemini-2.5-flash",
+      "callIndex": 3,
+      "metadata": {
+        "engineStatus": "success",
+        "usage": {
+          "promptTokens": 3067,
+          "completionTokens": 974,
+          "totalTokens": 4041,
+          "reasoningTokens": 0,
+          "cachedTokens": 0,
+          "cacheWriteTokens": 0,
+          "costCredits": 0.0033551,
+          "upstreamInferenceCost": 0.0033551
+        },
+        "subcallIndex": 3,
+        "promptVariantId": "conceptual_coverage",
+        "promptVariantInstruction": "Nesta avaliação, priorize a cobertura conceitual da resposta. Verifique se os conceitos centrais esperados foram abordados de maneira correta e suficiente, mesmo que a organização, redação ou terminologia não sejam ideais. Penalize omissões conceituais relevantes e confusões entre conceitos importantes."
+      }
+    }
+  ]
+}

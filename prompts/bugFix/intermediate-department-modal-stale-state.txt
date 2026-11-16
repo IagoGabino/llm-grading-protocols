@@ -1,0 +1,45 @@
+Avalie a correção de BUG da resposta do aluno para a questão abaixo usando a rubrica fornecida.
+
+[QUESTÃO / ENUNCIADO]
+{{{enunciado}}}
+
+[RUBRICA DE AVALIAÇÃO]
+{{{rubrica}}}
+
+[PONTOS ESPERADOS NA RESPOSTA]
+{{{pontos_esperados}}}
+
+[RESPOSTA DO ALUNO]
+Código:
+{{{codigo}}}
+
+Justificativa:
+{{{raciocinio}}}
+
+[INSTRUÇÕES DE AVALIAÇÃO]
+- Atribua notas de 0 a 5 por critério (números decimais permitidos, ex.: 3.5).
+- Verifique explicitamente:
+  (1) Se o aluno identifica que o array de dependências vazio no `useEffect` é a causa raiz — o efeito executa apenas na montagem, então quando `department` muda o estado local (`localName`, `errors`) não é reinicializado e continua com os dados da entidade anterior.
+  (2) Se a correção inclui `department?.id` (ou equivalente estável da entidade) no array de dependências do `useEffect`, fazendo o estado ser reinicializado na troca de entidade — aceite também a abordagem com `isOpen` + `department?.id` ou o uso de `key` no componente pai, desde que o aluno justifique os trade-offs da alternativa escolhida.
+  (3) Se a solução garante que erros de validação e edições temporárias não persistam quando o modal é fechado sem salvar e reaberto para outra entidade (ou para a mesma) — verifique se o reset ocorre no lugar certo: ao trocar de entidade, ao fechar o modal, ou em ambos.
+  (4) Se a correção não sobrescreve o que o usuário está digitando enquanto o modal está aberto para a mesma entidade — o efeito deve reagir apenas à mudança de `department?.id` ou de `isOpen`, não a cada keystroke.
+  (5) Se o aluno explica em linguagem clara por que o `useEffect` com dependências incorretas não detecta a troca de entidade, como o array de dependências controla a sincronização e o risco de sobrescrever input ativo com dependências excessivas.
+- Use "evidence" com trechos objetivos da resposta do aluno (citações curtas do código ou do raciocínio).
+- Consistência: a soma ponderada dos critérios deve refletir a nota "overall".
+- Se o aluno usa `department` (objeto inteiro) como dependência sem justificativa, penalize moderadamente em "edit_preservation": pode causar re-execução a cada render do pai, sobrescrevendo edições em andamento.
+- Se o aluno propõe `key` no componente pai como única solução sem mencionar trade-offs (remontagem, perda de foco, re-animação), penalize em "explanation".
+- Se o aluno coloca somente `setErrors({})` no handler `onClose` sem corrigir a sincronização de `localName` ao trocar de entidade, o bug principal não está resolvido: penalize fortemente em "sync_fix".
+- Não penalize soluções que adicionam lógica de validação extra, desde que o contrato de saída seja preservado.
+
+[FORMATO DE SAÍDA — JSON]
+{
+  "overall": 0-5 (decimal),
+  "criteria": [
+    { "id": "root_cause",       "score": 0-5 (decimal), "weight": 0.25, "evidence": "...", "comment": "..." },
+    { "id": "sync_fix",         "score": 0-5 (decimal), "weight": 0.35, "evidence": "...", "comment": "..." },
+    { "id": "cleanup_on_close", "score": 0-5 (decimal), "weight": 0.20, "evidence": "...", "comment": "..." },
+    { "id": "edit_preservation","score": 0-5 (decimal), "weight": 0.10, "evidence": "...", "comment": "..." },
+    { "id": "explanation",      "score": 0-5 (decimal), "weight": 0.10, "evidence": "...", "comment": "..." }
+  ],
+  "feedback": "comentário geral conciso focado em sincronização de estado com props, limpeza de erros no fechamento e preservação da edição em andamento"
+}

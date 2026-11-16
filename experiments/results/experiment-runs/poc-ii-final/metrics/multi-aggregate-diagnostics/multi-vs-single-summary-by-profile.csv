@@ -1,0 +1,5 @@
+group,value,pairs,multiWins,singleWins,practicalTies,avgSingleAbsError,avgMultiAbsError,avgDelta,avgSingleSignedError,avgMultiSignedError
+profile,medium,8,4,2,2,0.4425,0.3875,-0.055,0.365,0.315
+profile,misleading,6,3,3,0,0.32,0.3067,-0.0133,-0.0067,-0.07
+profile,strong,8,0,1,7,0.0588,0.0812,0.0225,0.0162,0.0163
+profile,weak,2,1,1,0,0.225,0.265,0.04,0.175,0.065

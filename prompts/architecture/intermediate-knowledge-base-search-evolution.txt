@@ -1,0 +1,59 @@
+Você é um avaliador de Engenharia de Software especializado em arquitetura de sistemas e performance de busca.
+Avalie a resposta do aluno para a questão de EVOLUÇÃO DA BUSCA TEXTUAL EM BASE DE CONHECIMENTO abaixo usando a rubrica fornecida.
+Responda ESTRITAMENTE com um JSON válido no formato especificado ao final.
+
+[QUESTÃO / ENUNCIADO]
+{{{enunciado}}}
+
+[RUBRICA DE AVALIAÇÃO]
+{{{rubrica}}}
+
+[PONTOS ESPERADOS NA RESPOSTA]
+{{{pontos_esperados}}}
+
+[RESPOSTA DO ALUNO]
+## Diagnóstico do problema atual
+{{{diagnostico}}}
+
+## Proposta de solução arquitetural
+{{{proposta}}}
+
+## Estratégia de indexação e atualização
+{{{indexacao}}}
+
+## Trade-offs e limitações
+{{{tradeoffs}}}
+
+[INSTRUÇÕES DE AVALIAÇÃO]
+- Atribua notas de 0 a 5 por critério (números decimais permitidos, ex.: 3.5).
+- Verifique explicitamente:
+
+  (1) Explica por que LIKE '%query%' é ineficiente: impossibilidade de usar índice B-tree, full table scan, custo proporcional ao tamanho da tabela
+  (2) Reconhece que o problema é duplo: performance (CPU/latência) e qualidade dos resultados (sem ranking, sem stemming, sem tolerância a erros)
+  (3) Propõe uma solução arquitetural clara — full-text nativo no banco, serviço dedicado ou abordagem incremental — sem deixar a resposta em aberto
+  (4) Justifica a escolha com base nos requisitos explícitos do problema: tamanho da base, equipe pequena, necessidade de evolução gradual, qualidade de relevância
+  (5) Descreve como o índice de busca será atualizado quando artigos forem criados, editados ou removidos (trigger, evento, fila, CDC ou reindexação periódica)
+  (6) Aborda como a visibilidade dos artigos (public/internal) é respeitada nos resultados de busca
+  (7) Identifica limitações concretas da solução escolhida: complexidade operacional, consistência eventual, carga residual no banco ou custo de infra adicional
+  (8) Reconhece o que foi sacrificado em relação às alternativas descartadas
+
+- Use "evidence" com trechos objetivos da resposta do aluno.
+- Consistência: a soma ponderada dos critérios deve refletir a nota "overall".
+- Não force serviço dedicado (Elasticsearch, etc.) como única resposta correta: full-text nativo no banco e abordagem incremental são soluções válidas se bem justificadas.
+- Se o aluno propuser full-text nativo no banco, avalie se menciona índice GIN/tsvector (ou equivalente) e como o vetor será mantido atualizado.
+- Se o aluno propuser serviço dedicado, avalie se descreve o mecanismo de sincronização com o banco e como trata falhas de propagação.
+- Se o diagnóstico não mencionar a causa raiz de performance do LIKE (varredura completa, ausência de índice utilizável), penalize em "problem_diagnosis".
+- Se não houver estratégia concreta de atualização do índice, penalize fortemente em "index_and_sync".
+- Se a justificativa da solução não mencionar nenhum RF ou NFR do enunciado, penalize em "solution_choice".
+
+[FORMATO DE SAÍDA — JSON]
+{
+  "overall": 0-5 (decimal),
+  "criteria": [
+    { "id": "problem_diagnosis",  "score": 0-5 (decimal), "weight": 0.25, "evidence": "…", "comment": "…" },
+    { "id": "solution_choice",    "score": 0-5 (decimal), "weight": 0.30, "evidence": "…", "comment": "…" },
+    { "id": "index_and_sync",     "score": 0-5 (decimal), "weight": 0.30, "evidence": "…", "comment": "…" },
+    { "id": "tradeoffs_analysis", "score": 0-5 (decimal), "weight": 0.15, "evidence": "…", "comment": "…" }
+  ],
+  "feedback": "comentário geral focado na qualidade do diagnóstico, coerência da escolha arquitetural com os requisitos, concretude da estratégia de indexação e maturidade na análise de trade-offs"
+}

@@ -1,0 +1,53 @@
+{
+  "experimentId": "poc-ii-final",
+  "plannedRuns": 72,
+  "foundRuns": 72,
+  "successRuns": 72,
+  "statusCountsByStrategy": {
+    "single": {
+      "success": 24,
+      "parse_error": 0,
+      "schema_error": 0,
+      "llm_error": 0,
+      "timeout": 0
+    },
+    "review": {
+      "success": 24,
+      "parse_error": 0,
+      "schema_error": 0,
+      "llm_error": 0,
+      "timeout": 0
+    },
+    "multi_aggregate": {
+      "success": 24,
+      "parse_error": 0,
+      "schema_error": 0,
+      "llm_error": 0,
+      "timeout": 0
+    }
+  },
+  "matrixCompleteness": {
+    "assessmentSource": "reference_answers",
+    "plannedRuns": 72,
+    "plannedRunsByStrategy": {
+      "single": 24,
+      "review": 24,
+      "multi_aggregate": 24
+    },
+    "foundRuns": 72,
+    "missingExecutions": [],
+    "duplicateExecutions": [],
+    "warnings": [
+      "Question axis \"architecture\" was reported as canonical axis \"designArchitecture\".",
+      "Question axis \"architecture\" was reported as canonical axis \"designArchitecture\".",
+      "Question axis \"tests\" was reported as canonical axis \"testing\".",
+      "Question axis \"tests\" was reported as canonical axis \"testing\"."
+    ]
+  },
+  "validationWarnings": [
+    "Question axis \"architecture\" was reported as canonical axis \"designArchitecture\".",
+    "Question axis \"architecture\" was reported as canonical axis \"designArchitecture\".",
+    "Question axis \"tests\" was reported as canonical axis \"testing\".",
+    "Question axis \"tests\" was reported as canonical axis \"testing\"."
+  ]
+}

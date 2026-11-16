@@ -1,0 +1,49 @@
+Você é um avaliador de Engenharia de Software.
+Avalie a resposta do aluno para a questão de LEGIBILIDADE abaixo usando a rubrica fornecida.
+Responda ESTRITAMENTE com um JSON válido no formato especificado ao final.
+
+[QUESTÃO / ENUNCIADO]
+{{{enunciado}}}
+
+[RUBRICA DE AVALIAÇÃO]
+{{{rubrica}}}
+
+[PONTOS ESPERADOS NA RESPOSTA]
+{{{pontos_esperados}}}
+
+[RESPOSTA DO ALUNO]
+Código:
+{{{codigo}}}
+
+Justificativa:
+{{{raciocinio}}}
+
+[INSTRUÇÕES DE AVALIAÇÃO]
+- Atribua notas de 0 a 5 por critério (números decimais permitidos, ex.: 4.5).
+- Verifique explicitamente:
+  (1) Predicados nomeados foram extraídos para verificações atômicas ou agrupamentos semânticos claros — ex.: isAccountActive, isComplianceBlocked, isFeatureEnabled, isInternalWithExperimentalAccess, isEnterpriseInAllowedRegion, isTrialAllowed, hasManualOverride. Cada predicado cobre uma única responsabilidade sem misturar regras de naturezas diferentes.
+  (2) A precedência das regras e exceções está explícita e organizada: o bloqueio de compliance é tratado como guard imediato antes de qualquer elegibilidade; as verificações globais (conta ativa, feature ativa) precedem as condições de perfil; o override manual aparece em posição que deixa inequívoco que não supera o compliance. A redundância do !complianceBlock dentro do override original foi eliminada ou explicada.
+  (3) Comportamento preservado para todas as combinações de entrada: (a) complianceBlock=true sempre retorna false, mesmo com override manual; (b) accountStatus != 'active' retorna false; (c) feature.enabled=false retorna false; (d) usuário interno com feature.experimentalOnly=true retorna true (quando não bloqueado); (e) enterprise em região permitida retorna true; (f) trial com allowTrial=true retorna true; (g) override manual retorna true (quando não bloqueado por compliance).
+  (4) A complexidade cognitiva foi reduzida: a expressão booleana densa original não existe mais como bloco único; o leitor compreende a lógica lendo os nomes dos predicados sem precisar simular a avaliação booleana mentalmente.
+  (5) A justificativa identifica os problemas de legibilidade (negações embutidas, precedência implícita de operadores, redundância do complianceBlock no override, mistura de bloqueios globais e elegibilidades por perfil), nomeia os predicados criados e explica a reorganização da precedência.
+- Use "evidence" com trechos objetivos do código ou da justificativa do aluno (citações curtas).
+- Consistência: a soma ponderada dos critérios deve refletir a nota "overall".
+- Se o aluno extrair predicados mas mantiver a expressão booleana densa na função principal, penalize em "predicate_extraction" e "cognitive_complexity_reduction".
+- Se o bloqueio de compliance não estiver separado como guard imediato antes das elegibilidades (ou equivalente claro), penalize em "precedence_organization".
+- Se o override manual aparecer em posição ou forma que sugira que poderia superar o compliance, penalize em "precedence_organization" mesmo que o comportamento final seja correto.
+- Se a redundância do !complianceBlock dentro do override original não for tratada (eliminada ou explicada), penalize levemente em "predicate_extraction".
+- Se qualquer regra de negócio for alterada (ex.: trial sem checar allowTrial, enterprise sem checar allowedRegions, override ignorando compliance), penalize fortemente em "behavior_preservation".
+- Se a justificativa for genérica e não mencionar especificamente os problemas de precedência booleana, negações ou a redundância do override, penalize em "reasoning".
+
+[FORMATO DE SAÍDA — JSON]
+{
+  "overall": 0-5 (decimal),
+  "criteria": [
+    { "id": "predicate_extraction",        "score": 0-5 (decimal), "weight": 0.30, "evidence": "…", "comment": "…" },
+    { "id": "precedence_organization",     "score": 0-5 (decimal), "weight": 0.30, "evidence": "…", "comment": "…" },
+    { "id": "behavior_preservation",       "score": 0-5 (decimal), "weight": 0.20, "evidence": "…", "comment": "…" },
+    { "id": "cognitive_complexity_reduction","score": 0-5 (decimal), "weight": 0.10, "evidence": "…", "comment": "…" },
+    { "id": "reasoning",                   "score": 0-5 (decimal), "weight": 0.10, "evidence": "…", "comment": "…" }
+  ],
+  "feedback": "comentário geral conciso focado em clareza dos predicados nomeados, organização explícita da precedência das regras e exceções (especialmente compliance como guard global) e preservação do comportamento da elegibilidade de acesso ao recurso beta"
+}

@@ -1,0 +1,58 @@
+[
+  {
+    "profile": "medium",
+    "runs": 8,
+    "improvedRuns": 3,
+    "worsenedRuns": 2,
+    "unchangedRuns": 3,
+    "unavailableRuns": 0,
+    "avgInitialAbsoluteError": 0.4425,
+    "avgFinalAbsoluteError": 0.4413,
+    "avgReviewDelta": -0.0013,
+    "avgScoreShift": -0.1437,
+    "avgInitialSignedError": 0.365,
+    "avgFinalSignedError": 0.2213
+  },
+  {
+    "profile": "misleading",
+    "runs": 6,
+    "improvedRuns": 1,
+    "worsenedRuns": 2,
+    "unchangedRuns": 3,
+    "unavailableRuns": 0,
+    "avgInitialAbsoluteError": 0.32,
+    "avgFinalAbsoluteError": 0.37,
+    "avgReviewDelta": 0.05,
+    "avgScoreShift": -0.0667,
+    "avgInitialSignedError": -0.0067,
+    "avgFinalSignedError": -0.0733
+  },
+  {
+    "profile": "strong",
+    "runs": 8,
+    "improvedRuns": 0,
+    "worsenedRuns": 0,
+    "unchangedRuns": 8,
+    "unavailableRuns": 0,
+    "avgInitialAbsoluteError": 0.0588,
+    "avgFinalAbsoluteError": 0.0588,
+    "avgReviewDelta": 0,
+    "avgScoreShift": 0,
+    "avgInitialSignedError": 0.0162,
+    "avgFinalSignedError": 0.0162
+  },
+  {
+    "profile": "weak",
+    "runs": 2,
+    "improvedRuns": 0,
+    "worsenedRuns": 1,
+    "unchangedRuns": 1,
+    "unavailableRuns": 0,
+    "avgInitialAbsoluteError": 0.225,
+    "avgFinalAbsoluteError": 0.6,
+    "avgReviewDelta": 0.375,
+    "avgScoreShift": 0.375,
+    "avgInitialSignedError": 0.175,
+    "avgFinalSignedError": 0.55
+  }
+]

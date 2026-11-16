@@ -1,0 +1,322 @@
+@import "tailwindcss";
+
+/* Tailwind v4 theme configuration - maps CSS vars to Tailwind utilities */
+@theme {
+    /* Colors - Tailwind will generate bg-*, text-*, border-* classes from these */
+    --color-background: hsl(var(--background));
+    --color-foreground: hsl(var(--foreground));
+    --color-card: hsl(var(--card));
+    --color-card-foreground: hsl(var(--card-foreground));
+    --color-popover: hsl(var(--popover));
+    --color-popover-foreground: hsl(var(--popover-foreground));
+    --color-primary: hsl(var(--primary));
+    --color-primary-foreground: hsl(var(--primary-foreground));
+    --color-secondary: hsl(var(--secondary));
+    --color-secondary-foreground: hsl(var(--secondary-foreground));
+    --color-muted: hsl(var(--muted));
+    --color-muted-foreground: hsl(var(--muted-foreground));
+    --color-accent: hsl(var(--accent));
+    --color-accent-foreground: hsl(var(--accent-foreground));
+    --color-destructive: hsl(var(--destructive));
+    --color-destructive-foreground: hsl(var(--destructive-foreground));
+    --color-success: hsl(var(--success));
+    --color-success-foreground: hsl(var(--success-foreground));
+    --color-warning: hsl(var(--warning));
+    --color-warning-foreground: hsl(var(--warning-foreground));
+    --color-info: hsl(var(--info));
+    --color-info-foreground: hsl(var(--info-foreground));
+    --color-border: hsl(var(--border));
+    --color-input: hsl(var(--input));
+    --color-ring: hsl(var(--ring));
+
+    /* Code backgrounds */
+    --color-code-bg: hsl(var(--code-bg));
+    --color-editor-bg: hsl(var(--editor-bg));
+
+    /* Border radius utilities */
+    --radius-sm: calc(0.5rem - 4px);
+    --radius-md: calc(0.5rem - 2px);
+    --radius-lg: 0.5rem;
+    --radius-xl: calc(0.5rem + 4px);
+}
+
+/* Definition of the design system for Tailwind v4
+   Following Lovable's exact pattern: HSL values without hsl() wrapper
+*/
+
+:root {
+    /* Core colors - light mode (Lovable's exact values) */
+    --background: 0 0% 100%;
+    --foreground: 222 47% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+
+    /* Primary purple */
+    --primary: 262 83% 58%;
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: 262 90% 70%;
+
+    /* Secondary & muted */
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 222 47% 11%;
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 9% 46%;
+
+    /* Accent */
+    --accent: 262 83% 58%;
+    --accent-foreground: 0 0% 100%;
+
+    /* Semantic colors */
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --success: 142 71% 45%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+    --info: 199 89% 48%;
+    --info-foreground: 0 0% 100%;
+
+    /* Borders & inputs */
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 262 83% 58%;
+
+    --radius: 0.5rem;
+
+    /* Difficulty levels */
+    --easy: 142 71% 45%;
+    --intermediate: 38 92% 50%;
+    --advanced: 0 84% 60%;
+
+    /* Code surfaces */
+    --code-bg: 220 14% 96%;
+    --editor-bg: 0 0% 98%;
+
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(262 83% 58%), hsl(262 90% 70%));
+    --gradient-success: linear-gradient(135deg, hsl(142 71% 45%), hsl(142 71% 60%));
+    --gradient-card: linear-gradient(180deg, hsl(0 0% 100%), hsl(220 14% 98%));
+
+    /* Shadows */
+    --shadow-sm: 0 1px 2px 0 hsl(0 0% 0% / 0.05);
+    --shadow-md: 0 4px 6px -1px hsl(0 0% 0% / 0.1);
+    --shadow-lg: 0 10px 15px -3px hsl(0 0% 0% / 0.1);
+    --shadow-glow: 0 0 40px hsl(262 90% 70% / 0.3);
+
+    /* Task types */
+    --code-quality: 262 83% 58%;
+    --bug-fix: 338 100% 59%;
+    --tests: 199 89% 48%;
+    --design: 142 71% 45%;
+
+    /* Transition for theme changes */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Dark mode - Lovable's exact dark mode colors */
+.dark {
+    --background: 222 47% 11%;
+    --foreground: 210 40% 98%;
+    --card: 217 33% 17%;
+    --card-foreground: 210 40% 98%;
+    --popover: 217 33% 17%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 262 83% 58%;
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: 262 90% 70%;
+    --secondary: 217 33% 17%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217 33% 17%;
+    --muted-foreground: 215 20% 65%;
+    --accent: 262 83% 58%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 210 40% 98%;
+    --success: 142 71% 45%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+    --info: 199 89% 48%;
+    --info-foreground: 0 0% 100%;
+    --border: 217 33% 23%;
+    --input: 217 33% 23%;
+    --ring: 262 83% 58%;
+
+    --code-bg: 216 28% 7%;
+    --editor-bg: 240 5% 6%;
+    --gradient-card: linear-gradient(180deg, hsl(217 33% 17%), hsl(217 33% 19%));
+    --shadow-sm: 0 1px 2px 0 hsl(0 0% 0% / 0.2);
+    --shadow-md: 0 4px 6px -1px hsl(0 0% 0% / 0.3);
+    --shadow-lg: 0 10px 15px -3px hsl(0 0% 0% / 0.4);
+    --shadow-glow: 0 0 40px hsl(262 90% 70% / 0.4);
+
+    --easy: 142 71% 45%;
+    --intermediate: 38 92% 50%;
+    --advanced: 0 84% 60%;
+
+    --code-quality: 262 83% 58%;
+    --bug-fix: 338 100% 59%;
+    --tests: 199 89% 48%;
+    --design: 142 71% 45%;
+
+    /* Transition for theme changes */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+    --gradient-primary: linear-gradient(135deg, hsl(262 83% 58%), hsl(262 90% 70%));
+    --gradient-success: linear-gradient(135deg, hsl(142 71% 45%), hsl(142 71% 60%));
+    --gradient-card: linear-gradient(180deg, hsl(217 33% 17%), hsl(217 33% 19%));
+
+    --shadow-sm: 0 1px 2px 0 hsl(0 0% 0% / 0.2);
+    --shadow-md: 0 4px 6px -1px hsl(0 0% 0% / 0.3);
+    --shadow-lg: 0 10px 15px -3px hsl(0 0% 0% / 0.4);
+    --shadow-glow: 0 0 40px hsl(262 90% 70% / 0.4);
+
+    --code-bg: 216 28% 7%;
+    --editor-bg: 240 5% 6%;
+}
+
+/* Base Styles */
+* {
+    border-color: hsl(var(--border));
+}
+
+body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+code {
+    font-family: var(--font-geist-mono), ui-monospace, monospace;
+    font-size: 0.875rem;
+}
+
+/* Custom Scrollbar Styles */
+* {
+    scrollbar-width: thin;
+    /* Firefox: light gray thumb, transparent track */
+    scrollbar-color: hsl(var(--muted)) transparent;
+}
+
+*::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+*::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+    /* Light gray thumb using the muted color from the design system */
+    background: hsl(var(--muted));
+    border-radius: 4px;
+    transition: background 0.2s ease;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+    /* Slightly darker on hover for affordance */
+    background: hsl(var(--muted) / 0.8);
+}
+
+*::-webkit-scrollbar-corner {
+    background: transparent;
+}
+
+/* Prose Styles */
+.prose {
+    max-width: none;
+    color: hsl(var(--foreground));
+}
+
+.prose h1 {
+    font-size: 1.875rem;
+    font-weight: 700;
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+}
+
+.prose h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-top: 1.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.prose h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-top: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.prose p {
+    margin-top: 0.75rem;
+    margin-bottom: 0.75rem;
+    line-height: 1.75;
+}
+
+/* força marcadores visíveis e recuo agradável dentro de .prose */
+.prose ul {
+    list-style: disc;
+    padding-left: 1.25rem;
+    margin: 0.5rem 0 0.75rem;
+}
+
+.prose ol {
+    list-style: decimal;
+    padding-left: 1.25rem;
+    margin: 0.5rem 0 0.75rem;
+}
+
+.prose li {
+    margin: 0.25rem 0;
+}
+
+.prose li::marker {
+    color: hsl(var(--muted-foreground));
+}
+
+/* se houver listas aninhadas */
+.prose ul ul {
+    list-style: circle;
+}
+
+.prose ol ol {
+    list-style: lower-alpha;
+}
+
+.prose code {
+    background-color: hsl(var(--muted));
+    padding: 0.125rem 0.375rem;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+}
+
+.prose pre {
+    background-color: hsl(var(--code-bg));
+    padding: 1rem;
+    border-radius: 0.5rem;
+    overflow-x: auto;
+    margin: 1rem 0;
+}
+
+.prose pre code {
+    background-color: transparent;
+    padding: 0;
+}
+
+.prose strong {
+    font-weight: 600;
+}
+
+.prose blockquote {
+    border-left: 4px solid hsl(var(--primary));
+    padding-left: 1rem;
+    font-style: italic;
+    margin: 1rem 0;
+}

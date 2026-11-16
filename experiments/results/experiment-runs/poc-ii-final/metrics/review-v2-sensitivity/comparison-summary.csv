@@ -1,0 +1,5 @@
+strategy,source,plannedRuns,successRuns,successRate,overallMAE,meanSignedError,totalCallCount,totalCostCredits,avgLatencyMs
+single,official,24,24,1,0.2658,0.14,24,0.0928855,7006.5833
+review_v1,official,24,24,1,0.3092,0.1067,48,0.1821893,12949.8333
+multi_aggregate,official,24,24,1,0.255,0.0983,72,0.2784707,20195.75
+review_v2_conservative,sensitivity,24,24,1,0.27,0.1442,24,0.0949988,6195.6667

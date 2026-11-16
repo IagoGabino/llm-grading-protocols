@@ -1,0 +1,54 @@
+[
+  {
+    "group": "profile",
+    "value": "medium",
+    "pairs": 8,
+    "multiWins": 4,
+    "singleWins": 2,
+    "practicalTies": 2,
+    "avgSingleAbsError": 0.4425,
+    "avgMultiAbsError": 0.3875,
+    "avgDelta": -0.055,
+    "avgSingleSignedError": 0.365,
+    "avgMultiSignedError": 0.315
+  },
+  {
+    "group": "profile",
+    "value": "misleading",
+    "pairs": 6,
+    "multiWins": 3,
+    "singleWins": 3,
+    "practicalTies": 0,
+    "avgSingleAbsError": 0.32,
+    "avgMultiAbsError": 0.3067,
+    "avgDelta": -0.0133,
+    "avgSingleSignedError": -0.0067,
+    "avgMultiSignedError": -0.07
+  },
+  {
+    "group": "profile",
+    "value": "strong",
+    "pairs": 8,
+    "multiWins": 0,
+    "singleWins": 1,
+    "practicalTies": 7,
+    "avgSingleAbsError": 0.0588,
+    "avgMultiAbsError": 0.0812,
+    "avgDelta": 0.0225,
+    "avgSingleSignedError": 0.0162,
+    "avgMultiSignedError": 0.0163
+  },
+  {
+    "group": "profile",
+    "value": "weak",
+    "pairs": 2,
+    "multiWins": 1,
+    "singleWins": 1,
+    "practicalTies": 0,
+    "avgSingleAbsError": 0.225,
+    "avgMultiAbsError": 0.265,
+    "avgDelta": 0.04,
+    "avgSingleSignedError": 0.175,
+    "avgMultiSignedError": 0.065
+  }
+]

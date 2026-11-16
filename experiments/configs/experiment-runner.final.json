@@ -1,0 +1,15 @@
+{
+    "experimentId": "poc-ii-final",
+    "model": "google/gemini-2.5-flash",
+    "promptVersion": "experiment-runner-v1",
+    "enabledStrategies": ["single", "review", "multi_aggregate"],
+    "referenceAnswersPath": "experiments/reference-answers/final",
+    "outputDir": "experiments/results/experiment-runs",
+    "execution": {
+        "useMock": false,
+        "timeoutMs": 60000,
+        "retryLimit": 0,
+        "concurrency": 1,
+        "overwrite": false
+    }
+}

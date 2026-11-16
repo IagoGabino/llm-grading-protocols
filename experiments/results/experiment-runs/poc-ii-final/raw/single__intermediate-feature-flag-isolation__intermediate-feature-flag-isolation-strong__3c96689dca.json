@@ -1,0 +1,23 @@
+{
+  "runId": "single__intermediate-feature-flag-isolation__intermediate-feature-flag-isolation-strong__3c96689dca",
+  "rawOutputs": [
+    {
+      "output": "{\n  \"overall\": 5,\n  \"criteria\": [\n    {\n      \"id\": \"root_cause_diagnosis\",\n      \"score\": 5,\n      \"weight\": 0.3,\n      \"evidence\": [\n        \"O FeatureFlagManager é um Singleton — existe uma única instância compartilhada em todo o processo.\",\n        \"O Test A chama featureFlags.set('NEW_UI', true) e nunca invoca reset().\",\n        \"Quando a suíte roda em sequência (Test A → Test B), o estado mutado por Test A permanece ativo na instância compartilhada.\",\n        \"Test B assume que NEW_UI começa em false (estado inicial), mas encontra true e falha.\",\n        \"Como o estado depende da ordem de execução dos testes, o bug se manifesta como Flaky Test: cada teste passa isoladamente, mas falham em conjunto.\"\n      ],\n      \"comment\": \"O aluno diagnosticou a causa raiz de forma excelente, identificando o Singleton e o vazamento de estado como o cerne do problema dos Flaky Tests.\"\n    },\n    {\n      \"id\": \"teardown_implementation\",\n      \"score\": 5,\n      \"weight\": 0.35,\n      \"evidence\": [\n        \"afterEach(() => { featureFlags.reset(); });\"\n      ],\n      \"comment\": \"A implementação do hook `afterEach` com a chamada a `featureFlags.reset()` está correta e segue as melhores práticas para Jest, garantindo a limpeza do estado após cada teste.\"\n    },\n    {\n      \"id\": \"determinism\",\n      \"score\": 5,\n      \"weight\": 0.25,\n      \"evidence\": [\n        \"Com o afterEach, ao final de qualquer teste o estado é resetado. Isso torna a suíte determinística em qualquer ordem:\",\n        \"- Test A → Test B: Test A seta NEW_UI, afterEach reseta, Test B encontra estado limpo. ✅\",\n        \"- Test B → Test A: Test B encontra estado limpo (nunca foi alterado), afterEach reseta (no-op), Test A seta NEW_UI e passa. ✅\"\n      ],\n      \"comment\": \"A justificativa demonstra claramente que a solução garante o determinismo e a independência da ordem de execução, cobrindo ambos os cenários de execução.\"\n    },\n    {\n      \"id\": \"conceptual_justification\",\n      \"score\": 5,\n      \"weight\": 0.1,\n      \"evidence\": [\n        \"Usar afterEach em vez de adicionar reset() manualmente dentro de cada teste é preferível porque: (1) centraliza a limpeza em um único lugar, (2) protege todos os testes presentes e futuros automaticamente, e (3) explicita a intenção de isolamento no próprio setup da suíte.\",\n        \"Cada teste é completamente independente do histórico de execução dos demais.\"\n      ],\n      \"comment\": \"A justificativa conceitual é sólida, explicando por que o `afterEach` é a escolha correta e como ele promove o isolamento de testes, um princípio fundamental da qualidade de testes.\"\n    }\n  ],\n  \"feedback\": \"Excelente trabalho na refatoração da suíte de testes! Você demonstrou um entendimento profundo sobre a causa raiz dos Flaky Tests relacionados a estado compartilhado (Singleton) e aplicou a solução correta utilizando o hook `afterEach` do Jest. A justificativa é clara, concisa e abrange todos os pontos importantes: o diagnóstico preciso do problema, a escolha e o propósito do hook, e como a solução garante o determinismo e a independência da ordem de execução dos testes. Isso reflete uma forte compreensão dos princípios de isolamento de testes e da importância de um setup e teardown adequados.\"\n}",
+      "model": "google/gemini-2.5-flash",
+      "callIndex": 1,
+      "metadata": {
+        "engineStatus": "success",
+        "usage": {
+          "promptTokens": 2556,
+          "completionTokens": 829,
+          "totalTokens": 3385,
+          "reasoningTokens": 0,
+          "cachedTokens": 0,
+          "cacheWriteTokens": 0,
+          "costCredits": 0.0028393,
+          "upstreamInferenceCost": 0.0028393
+        }
+      }
+    }
+  ]
+}
